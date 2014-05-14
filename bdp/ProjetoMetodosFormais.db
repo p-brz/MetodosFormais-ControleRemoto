@@ -4,5 +4,8 @@
     <project decomp_dir="/home/leobrizolara/atelierb-workspace/ProjetoMetodosFormais/bdp/expand_src" old_decomp_dir="/home/leobrizolara/atelierb-workspace/ProjetoMetodosFormais/bdp/src">
         <!-- Definition directory list -->
         <!-- Component file list -->
+        <component_file path="/home/leobrizolara/atelierb-workspace/ProjetoMetodosFormais" name="RemoteControlSystem" suffix="mch" user="leobrizolara">
+            <component name="RemoteControlSystem" type="specification" />
+        </component_file>
     </project>
 </db_xml>

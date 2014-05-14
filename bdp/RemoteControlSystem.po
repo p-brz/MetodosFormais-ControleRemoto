@@ -1,0 +1,112 @@
+﻿THEORY ProofList IS
+  _f(1) & _f(14) & _f(58) & loadProfile.5,(_f(64) & _f(44) => _f(65));
+  _f(1) & _f(14) & _f(58) & loadProfile.4,(_f(59) & _f(40) => _f(63));
+  _f(1) & _f(14) & _f(58) & loadProfile.3,(_f(59) & _f(40) => _f(62));
+  _f(1) & _f(14) & _f(58) & loadProfile.2,(_f(59) & _f(35) => _f(61));
+  _f(1) & _f(14) & _f(58) & loadProfile.1,(_f(59) & _f(35) => _f(60));
+  _f(1) & _f(14) & _f(55) & saveCurrentProfile.1,(_f(56) => _f(57));
+  _f(1) & _f(14) & _f(48) & importConfigurations.5,(_f(53) & _f(44) => _f(54));
+  _f(1) & _f(14) & _f(48) & importConfigurations.4,(_f(40) => _f(52));
+  _f(1) & _f(14) & _f(48) & importConfigurations.3,(_f(40) => _f(51));
+  _f(1) & _f(14) & _f(48) & importConfigurations.2,(_f(35) => _f(50));
+  _f(1) & _f(14) & _f(48) & importConfigurations.1,(_f(35) => _f(49));
+  _f(1) & _f(14) & _f(38) & recordKeyIdentifier.6,(_f(47) & _f(44) => _f(45));
+  _f(1) & _f(14) & _f(38) & recordKeyIdentifier.5,(_f(46) & _f(40) => _f(42));
+  _f(1) & _f(14) & _f(38) & recordKeyIdentifier.4,(_f(46) & _f(40) => _f(41));
+  _f(1) & _f(14) & _f(38) & recordKeyIdentifier.3,(_f(43) & _f(44) => _f(45));
+  _f(1) & _f(14) & _f(38) & recordKeyIdentifier.2,(_f(39) & _f(40) => _f(42));
+  _f(1) & _f(14) & _f(38) & recordKeyIdentifier.1,(_f(39) & _f(40) => _f(41));
+  _f(1) & _f(14) & _f(34) & recordSignal.2,(_f(35) => _f(37));
+  _f(1) & _f(14) & _f(34) & recordSignal.1,(_f(35) => _f(36));
+  _f(1) & _f(14) & _f(31) & pressSpecialKey.2,(_f(19) => _f(33));
+  _f(1) & _f(14) & _f(31) & pressSpecialKey.1,(_f(17) => _f(32));
+  _f(1) & _f(14) & decreaseTemperature.3,(_f(26) & _f(19) => _f(30));
+  _f(1) & _f(14) & decreaseTemperature.2,(_f(26) & _f(17) => _f(29));
+  _f(1) & _f(14) & decreaseTemperature.1,(_f(26) & _f(27) => _f(28));
+  _f(1) & _f(14) & increaseTemperature.3,(_f(21) & _f(19) => _f(25));
+  _f(1) & _f(14) & increaseTemperature.2,(_f(21) & _f(17) => _f(24));
+  _f(1) & _f(14) & increaseTemperature.1,(_f(21) & _f(22) => _f(23));
+  _f(1) & _f(14) & _f(15) & setTemperature.2,(_f(16) & _f(19) => _f(20));
+  _f(1) & _f(14) & _f(15) & setTemperature.1,(_f(16) & _f(17) => _f(18));
+  _f(1) & Initialisation.6,(_f(11) & _f(12) => _f(13));
+  _f(1) & Initialisation.5,(_f(2) & _f(9) => _f(10));
+  _f(1) & Initialisation.4,(_f(2) & _f(6) => _f(8));
+  _f(1) & Initialisation.3,(_f(2) & _f(6) => _f(7));
+  _f(1) & Initialisation.2,(_f(2) & _f(3) => _f(5));
+  _f(1) & Initialisation.1,(_f(2) & _f(3) => _f(4))
+END
+&
+THEORY Formulas IS
+  ("`Component properties'" & TEMPERATURE: POW(INT) & 3<=card(TEMPERATURE) & maxTemperature = max(TEMPERATURE) & minTemperature = min(TEMPERATURE) & nullSignal: SIGNAL & CONTROL_KEYS: POW(KEY) & nullIdentifier: IDENTIFIER & CONTROL_CONFIGURATION = CONTROL_KEYS*(SIGNAL*IDENTIFIER) & incKey: CONTROL_KEYS & decKey: CONTROL_KEYS & setKey: CONTROL_KEYS & SPECIAL_KEYS = CONTROL_KEYS-({incKey}\/{decKey}\/{setKey}) & not(incKey = decKey) & not(incKey = setKey) & not(decKey = setKey) & 3<=card(CONTROL_KEYS) & defaultProfile: PROFILE_IDENTIFIER & SIGNAL: FIN(INTEGER) & not(SIGNAL = {}) & KEY: FIN(INTEGER) & not(KEY = {}) & IDENTIFIER: FIN(INTEGER) & not(IDENTIFIER = {}) & PROFILE_IDENTIFIER: FIN(INTEGER) & not(PROFILE_IDENTIFIER = {}));
+  ("`Local hypotheses'" & nameOut$0: IDENTIFIER & signalOut$0: SIGNAL & temp: TEMPERATURE & minTemperature<=temp & temp<=maxTemperature);
+  "`Check that the invariant (keyMap: CONTROL_KEYS --> SIGNAL) is established by the initialisation - ref 3.3'";
+  (CONTROL_KEYS*{nullSignal}: CONTROL_KEYS +-> SIGNAL);
+  (dom(CONTROL_KEYS*{nullSignal}) = CONTROL_KEYS);
+  "`Check that the invariant (keyName: CONTROL_KEYS --> IDENTIFIER) is established by the initialisation - ref 3.3'";
+  (CONTROL_KEYS*{nullIdentifier}: CONTROL_KEYS +-> IDENTIFIER);
+  (dom(CONTROL_KEYS*{nullIdentifier}) = CONTROL_KEYS);
+  "`Check that the invariant (savedProfiles: PROFILE_IDENTIFIER +-> POW(CONTROL_CONFIGURATION)) is established by the initialisation - ref 3.3'";
+  ({defaultProfile|->CONTROL_KEYS*({nullSignal}*{nullIdentifier})}: PROFILE_IDENTIFIER +-> POW(CONTROL_CONFIGURATION));
+  ("`Local hypotheses'" & nameOut$0: IDENTIFIER & signalOut$0: SIGNAL & temp: TEMPERATURE & minTemperature<=temp & temp<=maxTemperature & key1: CONTROL_KEYS & key2: CONTROL_KEYS & not(key1 = key2));
+  "`Check that the invariant (!(key1,key2).(key1: CONTROL_KEYS & key2: CONTROL_KEYS & key1/=key2 => keyName(key1)/=keyName(key2) or keyName(key1) = nullIdentifier)) is established by the initialisation - ref 3.3'";
+  (not((CONTROL_KEYS*{nullIdentifier})(key1) = (CONTROL_KEYS*{nullIdentifier})(key2)) or (CONTROL_KEYS*{nullIdentifier})(key1) = nullIdentifier);
+  ("`Component invariant'" & currentTemperature: TEMPERATURE & currentTemperature<=maxTemperature & minTemperature<=currentTemperature & keyMap: CONTROL_KEYS +-> SIGNAL & dom(keyMap) = CONTROL_KEYS & keyName: CONTROL_KEYS +-> IDENTIFIER & dom(keyName) = CONTROL_KEYS & signalOut: SIGNAL & nameOut: IDENTIFIER & savedProfiles: PROFILE_IDENTIFIER +-> POW(CONTROL_CONFIGURATION) & currentProfileIdent: PROFILE_IDENTIFIER & !(key1,key2).(key1: CONTROL_KEYS & key2: CONTROL_KEYS & not(key1 = key2) => not(keyName(key1) = keyName(key2)) or keyName(key1) = nullIdentifier));
+  ("`setTemperature preconditions in this component'" & temp: TEMPERATURE);
+  ("`Local hypotheses'" & temp<=maxTemperature & minTemperature<=temp);
+  "`Check that the invariant (signalOut: SIGNAL) is preserved by the operation - ref 3.4'";
+  (keyMap(setKey): SIGNAL);
+  "`Check that the invariant (nameOut: IDENTIFIER) is preserved by the operation - ref 3.4'";
+  (keyName(setKey): IDENTIFIER);
+  ("`Local hypotheses'" & currentTemperature+1<=maxTemperature & currentTemperature+1: TEMPERATURE);
+  "`Check that the invariant (currentTemperature>=minTemperature) is preserved by the operation - ref 3.4'";
+  (minTemperature<=currentTemperature+1);
+  (keyMap(incKey): SIGNAL);
+  (keyName(incKey): IDENTIFIER);
+  ("`Local hypotheses'" & minTemperature<=currentTemperature-1 & currentTemperature-1: TEMPERATURE);
+  "`Check that the invariant (currentTemperature<=maxTemperature) is preserved by the operation - ref 3.4'";
+  (currentTemperature-1<=maxTemperature);
+  (keyMap(decKey): SIGNAL);
+  (keyName(decKey): IDENTIFIER);
+  ("`pressSpecialKey preconditions in this component'" & key: SPECIAL_KEYS);
+  (keyMap(key): SIGNAL);
+  (keyName(key): IDENTIFIER);
+  ("`recordSignal preconditions in this component'" & signal: SIGNAL & key: CONTROL_KEYS);
+  "`Check that the invariant (keyMap: CONTROL_KEYS --> SIGNAL) is preserved by the operation - ref 3.4'";
+  (keyMap<+{key|->signal}: CONTROL_KEYS +-> SIGNAL);
+  (dom(keyMap<+{key|->signal}) = CONTROL_KEYS);
+  ("`recordKeyIdentifier preconditions in this component'" & key: CONTROL_KEYS & ident: IDENTIFIER);
+  ("`Local hypotheses'" & not(ident: ran(keyName)));
+  "`Check that the invariant (keyName: CONTROL_KEYS --> IDENTIFIER) is preserved by the operation - ref 3.4'";
+  (keyName<+{key|->ident}: CONTROL_KEYS +-> IDENTIFIER);
+  (dom(keyName<+{key|->ident}) = CONTROL_KEYS);
+  ("`Local hypotheses'" & not(ident: ran(keyName)) & key1: CONTROL_KEYS & key2: CONTROL_KEYS & not(key1 = key2));
+  "`Check that the invariant (!(key1,key2).(key1: CONTROL_KEYS & key2: CONTROL_KEYS & key1/=key2 => keyName(key1)/=keyName(key2) or keyName(key1) = nullIdentifier)) is preserved by the operation - ref 3.4'";
+  (not((keyName<+{key|->ident})(key1) = (keyName<+{key|->ident})(key2)) or (keyName<+{key|->ident})(key1) = nullIdentifier);
+  ("`Local hypotheses'" & ident = nullIdentifier);
+  ("`Local hypotheses'" & ident = nullIdentifier & key1: CONTROL_KEYS & key2: CONTROL_KEYS & not(key1 = key2));
+  ("`importConfigurations preconditions in this component'" & ctrlConfigs: POW(CONTROL_CONFIGURATION) & dom(ctrlConfigs) = CONTROL_KEYS & card(ctrlConfigs) = card(CONTROL_KEYS) & !(key1,key2,sign1,sign2,ident1,ident2).(key1: CONTROL_KEYS & key2: CONTROL_KEYS & sign1: SIGNAL & sign2: SIGNAL & ident1: IDENTIFIER & ident2: IDENTIFIER & key1|->(sign1|->ident1): ctrlConfigs & key2|->(sign2|->ident2): ctrlConfigs & not(key1 = key2) => not(ident1 = ident2) or ident1 = nullIdentifier));
+  (keyMap<+SET(key,sign).(key: CONTROL_KEYS & sign: SIGNAL & #ident.(ident: IDENTIFIER & key|->(sign|->ident): ctrlConfigs)): CONTROL_KEYS +-> SIGNAL);
+  (dom(keyMap<+SET(key,sign).(key: CONTROL_KEYS & sign: SIGNAL & #ident.(ident: IDENTIFIER & key|->(sign|->ident): ctrlConfigs))) = CONTROL_KEYS);
+  (keyName<+SET(key,ident).(key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): ctrlConfigs)): CONTROL_KEYS +-> IDENTIFIER);
+  (dom(keyName<+SET(key,ident).(key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): ctrlConfigs))) = CONTROL_KEYS);
+  ("`Local hypotheses'" & key1: CONTROL_KEYS & key2: CONTROL_KEYS & not(key1 = key2));
+  (not((keyName<+SET(key,ident).(key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): ctrlConfigs)))(key1) = (keyName<+SET(key,ident).(key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): ctrlConfigs)))(key2)) or (keyName<+SET(key,ident).(key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): ctrlConfigs)))(key1) = nullIdentifier);
+  ("`saveCurrentProfile preconditions in this component'" & ident: PROFILE_IDENTIFIER);
+  "`Check that the invariant (savedProfiles: PROFILE_IDENTIFIER +-> POW(CONTROL_CONFIGURATION)) is preserved by the operation - ref 3.4'";
+  (savedProfiles<+{ident|->%key.(key: CONTROL_KEYS | keyMap(key),keyName(key))}: PROFILE_IDENTIFIER +-> POW(CONTROL_CONFIGURATION));
+  ("`loadProfile preconditions in this component'" & profileIdent: PROFILE_IDENTIFIER);
+  ("`Local hypotheses'" & profileIdent: dom(savedProfiles));
+  (keyMap<+SET(key,sign).(key: CONTROL_KEYS & sign: SIGNAL & #ident.(ident: IDENTIFIER & key|->(sign|->ident): savedProfiles(profileIdent))): CONTROL_KEYS +-> SIGNAL);
+  (dom(keyMap<+SET(key,sign).(key: CONTROL_KEYS & sign: SIGNAL & #ident.(ident: IDENTIFIER & key|->(sign|->ident): savedProfiles(profileIdent)))) = CONTROL_KEYS);
+  (keyName<+SET(key,ident).(key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): savedProfiles(profileIdent))): CONTROL_KEYS +-> IDENTIFIER);
+  (dom(keyName<+SET(key,ident).(key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): savedProfiles(profileIdent)))) = CONTROL_KEYS);
+  ("`Local hypotheses'" & profileIdent: dom(savedProfiles) & key1: CONTROL_KEYS & key2: CONTROL_KEYS & not(key1 = key2));
+  (not((keyName<+SET(key,ident).(key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): savedProfiles(profileIdent))))(key1) = (keyName<+SET(key,ident).(key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): savedProfiles(profileIdent))))(key2)) or (keyName<+SET(key,ident).(key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): savedProfiles(profileIdent))))(key1) = nullIdentifier)
+END
+&
+THEORY EnumerateX 
+END
+&
+THEORY Version IS
+  POVersion("V4.0-29507")(CLT == "V4.0-31779")(genOPO == KO, genDivergencePO == KO, local_op == OK)
+END
