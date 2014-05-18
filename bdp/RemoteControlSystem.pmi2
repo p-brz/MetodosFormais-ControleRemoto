@@ -1,31 +1,32 @@
 ﻿THEORY BalanceX IS
-  RemoteControlSystem,28,0,0,16,3,0,0;
-  Initialisation,5,0,0,2,3,0,0;
+  RemoteControlSystem,29,0,0,22,6,0,0;
+  Initialisation,7,0,0,3,4,0,0;
   setTemperature,2,0,0,2,0,0,0;
   increaseTemperature,3,0,0,3,0,0,0;
   decreaseTemperature,3,0,0,3,0,0,0;
   showTemperature,0,0,0,0,0,0,0;
   pressSpecialKey,2,0,0,2,0,0,0;
-  recordSignal,2,0,0,2,0,0,0;
-  recordKeyIdentifier,2,0,0,2,0,0,0;
+  recordSignal,1,0,0,1,0,0,0;
+  recordKeyIdentifier,4,0,0,2,2,0,0;
   showKeyIdentifier,0,0,0,0,0,0,0;
   exportConfigurations,0,0,0,0,0,0,0;
-  importConfigurations,4,0,0,0,0,0,0;
-  saveCurrentProfile,1,0,0,0,0,0,0;
-  loadProfile,4,0,0,0,0,0,0;
+  importConfigurations,0,0,0,0,0,0,0;
+  saveCurrentProfile,4,0,0,3,0,0,0;
+  loadProfile,3,0,0,3,0,0,0;
   showCurrentProfileIdentification,0,0,0,0,0,0,0
 END
 &
 THEORY ProofState IS
+  Proved(0);
+  Proved(0);
+  Proved(0);
   Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
+  Proved(0);
+  Proved(0);
+  Proved(0);
+  Proved(1);
+  Proved(0);
+  Proved(1);
   Proved(0);
   Proved(0);
   Proved(0);
@@ -41,22 +42,23 @@ THEORY ProofState IS
   Proved(0);
   Proved(0);
   Proved(1);
-  Proved(0);
   Proved(1);
   Proved(0);
+  Proved(1);
   Proved(1)
 END
 &
 THEORY MethodList IS
+  pr;
+  pr;
+  pr;
   ?;
-  ?;
-  ?;
-  ?;
-  ?;
-  ?;
-  ?;
-  ?;
-  ?;
+  pr;
+  pr;
+  pr;
+  pr;
+  pr;
+  pr;
   pr;
   pr;
   pr;
@@ -79,33 +81,34 @@ THEORY MethodList IS
 END
 &
 THEORY PassList IS
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
   Force(0),(?;0;1;2;3);
   Force(0),?;
   Force(0),?;
-  Force(0),?;
-  Force(0),?;
-  Force(0),?;
-  Force(0),?;
-  Force(0),?;
-  Force(0),?;
-  Force(0),?;
-  Force(0),?;
-  Force(0),?;
-  Force(0),?;
-  Force(0),?;
-  Force(0),?;
-  Force(1),(?;0);
   Force(0),?;
   Force(1),?;
   Force(0),?;
+  Force(1),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(1),?;
+  Force(1),?;
+  Force(0),?;
+  Force(1),?;
   Force(1),?
 END
 &

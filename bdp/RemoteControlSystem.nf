@@ -37,9 +37,9 @@ THEORY ListVariablesX IS
   External_Context_List_Variables(Machine(RemoteControlSystem))==(?);
   Context_List_Variables(Machine(RemoteControlSystem))==(?);
   Abstract_List_Variables(Machine(RemoteControlSystem))==(?);
-  Local_List_Variables(Machine(RemoteControlSystem))==(currentProfileIdent,savedProfiles,nameOut,signalOut,keyName,keyMap,currentTemperature);
-  List_Variables(Machine(RemoteControlSystem))==(currentProfileIdent,savedProfiles,nameOut,signalOut,keyName,keyMap,currentTemperature);
-  External_List_Variables(Machine(RemoteControlSystem))==(currentProfileIdent,savedProfiles,nameOut,signalOut,keyName,keyMap,currentTemperature)
+  Local_List_Variables(Machine(RemoteControlSystem))==(currentProfileIdent,savedProfilesNames,savedProfilesSignals,nameOut,signalOut,keyName,keyMap,currentTemperature);
+  List_Variables(Machine(RemoteControlSystem))==(currentProfileIdent,savedProfilesNames,savedProfilesSignals,nameOut,signalOut,keyName,keyMap,currentTemperature);
+  External_List_Variables(Machine(RemoteControlSystem))==(currentProfileIdent,savedProfilesNames,savedProfilesSignals,nameOut,signalOut,keyName,keyMap,currentTemperature)
 END
 &
 THEORY ListVisibleVariablesX IS
@@ -57,7 +57,7 @@ THEORY ListInvariantX IS
   Expanded_List_Invariant(Machine(RemoteControlSystem))==(btrue);
   Abstract_List_Invariant(Machine(RemoteControlSystem))==(btrue);
   Context_List_Invariant(Machine(RemoteControlSystem))==(btrue);
-  List_Invariant(Machine(RemoteControlSystem))==(currentTemperature: TEMPERATURE & currentTemperature<=maxTemperature & currentTemperature>=minTemperature & keyMap: CONTROL_KEYS --> SIGNAL & keyName: CONTROL_KEYS --> IDENTIFIER & signalOut: SIGNAL & nameOut: IDENTIFIER & savedProfiles: PROFILE_IDENTIFIER +-> POW(CONTROL_CONFIGURATION) & currentProfileIdent: PROFILE_IDENTIFIER & !(key1,key2).(key1: CONTROL_KEYS & key2: CONTROL_KEYS & key1/=key2 => keyName(key1)/=keyName(key2) or keyName(key1) = nullIdentifier))
+  List_Invariant(Machine(RemoteControlSystem))==(currentTemperature: TEMPERATURE & currentTemperature<=maxTemperature & currentTemperature>=minTemperature & signalOut: SIGNAL & nameOut: IDENTIFIER & keyMap: KEYS_TO_SIGNALS & keyName: KEYS_TO_IDENTIFIERS & !(key1,key2).(key1: CONTROL_KEYS & key2: CONTROL_KEYS & key1/=key2 => keyName(key1)/=keyName(key2) or keyName(key1) = nullIdentifier) & savedProfilesSignals: PROFILE_IDENTIFIER +-> KEYS_TO_SIGNALS & savedProfilesNames: PROFILE_IDENTIFIER +-> KEYS_TO_IDENTIFIERS & dom(savedProfilesSignals) = dom(savedProfilesNames) & currentProfileIdent: PROFILE_IDENTIFIER & !keysToIds.(keysToIds: KEYS_TO_IDENTIFIERS & keysToIds: ran(savedProfilesNames) => !(key1,key2).(key1: CONTROL_KEYS & key2: CONTROL_KEYS & key1/=key2 => keysToIds(key1)/=keysToIds(key2) or keysToIds(key1) = nullIdentifier)))
 END
 &
 THEORY ListAssertionsX IS
@@ -76,9 +76,9 @@ THEORY ListExclusivityX IS
 END
 &
 THEORY ListInitialisationX IS
-  Expanded_List_Initialisation(Machine(RemoteControlSystem))==(@temp.(temp: TEMPERATURE & temp>=minTemperature & temp<=maxTemperature ==> currentTemperature:=temp) || keyMap:=CONTROL_KEYS*{nullSignal} || keyName:=CONTROL_KEYS*{nullIdentifier} || @(signalOut$0).(signalOut$0: SIGNAL ==> signalOut:=signalOut$0) || @(nameOut$0).(nameOut$0: IDENTIFIER ==> nameOut:=nameOut$0) || currentProfileIdent:=defaultProfile || savedProfiles:={defaultProfile|->CONTROL_KEYS*({nullSignal}*{nullIdentifier})});
+  Expanded_List_Initialisation(Machine(RemoteControlSystem))==(@temp.(temp: TEMPERATURE & temp>=minTemperature & temp<=maxTemperature ==> currentTemperature:=temp) || keyMap:=CONTROL_KEYS*{nullSignal} || keyName:=CONTROL_KEYS*{nullIdentifier} || @(signalOut$0).(signalOut$0: SIGNAL ==> signalOut:=signalOut$0) || @(nameOut$0).(nameOut$0: IDENTIFIER ==> nameOut:=nameOut$0) || currentProfileIdent:=defaultProfile || savedProfilesSignals:={defaultProfile|->CONTROL_KEYS*{nullSignal}} || savedProfilesNames:={defaultProfile|->CONTROL_KEYS*{nullIdentifier}});
   Context_List_Initialisation(Machine(RemoteControlSystem))==(skip);
-  List_Initialisation(Machine(RemoteControlSystem))==(ANY temp WHERE temp: TEMPERATURE & temp>=minTemperature & temp<=maxTemperature THEN currentTemperature:=temp END || keyMap:=CONTROL_KEYS*{nullSignal} || keyName:=CONTROL_KEYS*{nullIdentifier} || signalOut:: SIGNAL || nameOut:: IDENTIFIER || currentProfileIdent:=defaultProfile || savedProfiles:={defaultProfile|->CONTROL_KEYS*({nullSignal}*{nullIdentifier})})
+  List_Initialisation(Machine(RemoteControlSystem))==(ANY temp WHERE temp: TEMPERATURE & temp>=minTemperature & temp<=maxTemperature THEN currentTemperature:=temp END || keyMap:=CONTROL_KEYS*{nullSignal} || keyName:=CONTROL_KEYS*{nullIdentifier} || signalOut:: SIGNAL || nameOut:: IDENTIFIER || currentProfileIdent:=defaultProfile || savedProfilesSignals:={defaultProfile|->CONTROL_KEYS*{nullSignal}} || savedProfilesNames:={defaultProfile|->CONTROL_KEYS*{nullIdentifier}})
 END
 &
 THEORY ListParametersX IS
@@ -107,7 +107,7 @@ THEORY ListInputX IS
   List_Input(Machine(RemoteControlSystem),recordKeyIdentifier)==(key,ident);
   List_Input(Machine(RemoteControlSystem),showKeyIdentifier)==(key);
   List_Input(Machine(RemoteControlSystem),exportConfigurations)==(?);
-  List_Input(Machine(RemoteControlSystem),importConfigurations)==(ctrlConfigs);
+  List_Input(Machine(RemoteControlSystem),importConfigurations)==(keysToSignals,keysToIds);
   List_Input(Machine(RemoteControlSystem),saveCurrentProfile)==(ident);
   List_Input(Machine(RemoteControlSystem),loadProfile)==(profileIdent);
   List_Input(Machine(RemoteControlSystem),showCurrentProfileIdentification)==(?)
@@ -122,7 +122,7 @@ THEORY ListOutputX IS
   List_Output(Machine(RemoteControlSystem),recordSignal)==(?);
   List_Output(Machine(RemoteControlSystem),recordKeyIdentifier)==(recorded);
   List_Output(Machine(RemoteControlSystem),showKeyIdentifier)==(ident);
-  List_Output(Machine(RemoteControlSystem),exportConfigurations)==(controlConfigurations);
+  List_Output(Machine(RemoteControlSystem),exportConfigurations)==(keysToSignals,keysToIdentifiers);
   List_Output(Machine(RemoteControlSystem),importConfigurations)==(?);
   List_Output(Machine(RemoteControlSystem),saveCurrentProfile)==(?);
   List_Output(Machine(RemoteControlSystem),loadProfile)==(success);
@@ -138,8 +138,8 @@ THEORY ListHeaderX IS
   List_Header(Machine(RemoteControlSystem),recordSignal)==(recordSignal(signal,key));
   List_Header(Machine(RemoteControlSystem),recordKeyIdentifier)==(recorded <-- recordKeyIdentifier(key,ident));
   List_Header(Machine(RemoteControlSystem),showKeyIdentifier)==(ident <-- showKeyIdentifier(key));
-  List_Header(Machine(RemoteControlSystem),exportConfigurations)==(controlConfigurations <-- exportConfigurations);
-  List_Header(Machine(RemoteControlSystem),importConfigurations)==(importConfigurations(ctrlConfigs));
+  List_Header(Machine(RemoteControlSystem),exportConfigurations)==(keysToSignals,keysToIdentifiers <-- exportConfigurations);
+  List_Header(Machine(RemoteControlSystem),importConfigurations)==(importConfigurations(keysToSignals,keysToIds));
   List_Header(Machine(RemoteControlSystem),saveCurrentProfile)==(saveCurrentProfile(ident));
   List_Header(Machine(RemoteControlSystem),loadProfile)==(success <-- loadProfile(profileIdent));
   List_Header(Machine(RemoteControlSystem),showCurrentProfileIdentification)==(currentProfileName <-- showCurrentProfileIdentification)
@@ -157,7 +157,7 @@ THEORY ListPreconditionX IS
   List_Precondition(Machine(RemoteControlSystem),recordKeyIdentifier)==(key: CONTROL_KEYS & ident: IDENTIFIER);
   List_Precondition(Machine(RemoteControlSystem),showKeyIdentifier)==(key: CONTROL_KEYS);
   List_Precondition(Machine(RemoteControlSystem),exportConfigurations)==(btrue);
-  List_Precondition(Machine(RemoteControlSystem),importConfigurations)==(ctrlConfigs: POW(CONTROL_CONFIGURATION) & dom(ctrlConfigs) = CONTROL_KEYS & card(ctrlConfigs) = card(CONTROL_KEYS) & !(key1,key2,sign1,sign2,ident1,ident2).(key1: CONTROL_KEYS & key2: CONTROL_KEYS & sign1: SIGNAL & sign2: SIGNAL & ident1: IDENTIFIER & ident2: IDENTIFIER & key1|->(sign1|->ident1): ctrlConfigs & key2|->(sign2|->ident2): ctrlConfigs & key1/=key2 => ident1/=ident2 or ident1 = nullIdentifier));
+  List_Precondition(Machine(RemoteControlSystem),importConfigurations)==(keysToSignals: KEYS_TO_SIGNALS & keysToIds: KEYS_TO_IDENTIFIERS & !(key1,key2).(key1: CONTROL_KEYS & key2: CONTROL_KEYS & key1/=key2 => keysToIds(key1)/=keysToIds(key2) or keysToIds(key1) = nullIdentifier));
   List_Precondition(Machine(RemoteControlSystem),saveCurrentProfile)==(ident: PROFILE_IDENTIFIER);
   List_Precondition(Machine(RemoteControlSystem),loadProfile)==(profileIdent: PROFILE_IDENTIFIER);
   List_Precondition(Machine(RemoteControlSystem),showCurrentProfileIdentification)==(btrue)
@@ -165,10 +165,10 @@ END
 &
 THEORY ListSubstitutionX IS
   Expanded_List_Substitution(Machine(RemoteControlSystem),showCurrentProfileIdentification)==(btrue | currentProfileName:=currentProfileIdent);
-  Expanded_List_Substitution(Machine(RemoteControlSystem),loadProfile)==(profileIdent: PROFILE_IDENTIFIER | profileIdent: dom(savedProfiles) ==> keyMap,keyName,currentProfileIdent,success:=keyMap<+{key,sign | key: CONTROL_KEYS & sign: SIGNAL & #ident.(ident: IDENTIFIER & key|->(sign|->ident): savedProfiles(profileIdent))},keyName<+{key,ident | key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): savedProfiles(profileIdent))},profileIdent,TRUE [] not(profileIdent: dom(savedProfiles)) ==> success:=FALSE);
-  Expanded_List_Substitution(Machine(RemoteControlSystem),saveCurrentProfile)==(ident: PROFILE_IDENTIFIER | savedProfiles:=savedProfiles<+{ident|->%key.(key: CONTROL_KEYS | keyMap(key),keyName(key))});
-  Expanded_List_Substitution(Machine(RemoteControlSystem),importConfigurations)==(ctrlConfigs: POW(CONTROL_CONFIGURATION) & dom(ctrlConfigs) = CONTROL_KEYS & card(ctrlConfigs) = card(CONTROL_KEYS) & !(key1,key2,sign1,sign2,ident1,ident2).(key1: CONTROL_KEYS & key2: CONTROL_KEYS & sign1: SIGNAL & sign2: SIGNAL & ident1: IDENTIFIER & ident2: IDENTIFIER & key1|->(sign1|->ident1): ctrlConfigs & key2|->(sign2|->ident2): ctrlConfigs & key1/=key2 => ident1/=ident2 or ident1 = nullIdentifier) | keyMap,keyName:=keyMap<+{key,sign | key: CONTROL_KEYS & sign: SIGNAL & #ident.(ident: IDENTIFIER & key|->(sign|->ident): ctrlConfigs)},keyName<+{key,ident | key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): ctrlConfigs)});
-  Expanded_List_Substitution(Machine(RemoteControlSystem),exportConfigurations)==(btrue | controlConfigurations:=%key.(key: CONTROL_KEYS | keyMap(key),keyName(key)));
+  Expanded_List_Substitution(Machine(RemoteControlSystem),loadProfile)==(profileIdent: PROFILE_IDENTIFIER | profileIdent: dom(savedProfilesSignals) ==> keyMap,keyName,currentProfileIdent,success:=savedProfilesSignals(profileIdent),savedProfilesNames(profileIdent),profileIdent,TRUE [] not(profileIdent: dom(savedProfilesSignals)) ==> success:=FALSE);
+  Expanded_List_Substitution(Machine(RemoteControlSystem),saveCurrentProfile)==(ident: PROFILE_IDENTIFIER | savedProfilesSignals,savedProfilesNames:=savedProfilesSignals<+{ident|->keyMap},savedProfilesNames<+{ident|->keyName});
+  Expanded_List_Substitution(Machine(RemoteControlSystem),importConfigurations)==(keysToSignals: KEYS_TO_SIGNALS & keysToIds: KEYS_TO_IDENTIFIERS & !(key1,key2).(key1: CONTROL_KEYS & key2: CONTROL_KEYS & key1/=key2 => keysToIds(key1)/=keysToIds(key2) or keysToIds(key1) = nullIdentifier) | keyMap,keyName:=keysToSignals,keysToIds);
+  Expanded_List_Substitution(Machine(RemoteControlSystem),exportConfigurations)==(btrue | keysToSignals,keysToIdentifiers:=keyMap,keyName);
   Expanded_List_Substitution(Machine(RemoteControlSystem),showKeyIdentifier)==(key: CONTROL_KEYS | ident:=keyName(key));
   Expanded_List_Substitution(Machine(RemoteControlSystem),recordKeyIdentifier)==(key: CONTROL_KEYS & ident: IDENTIFIER | ident/:ran(keyName) or ident = nullIdentifier ==> keyName,recorded:=keyName<+{key|->ident},TRUE [] not(ident/:ran(keyName) or ident = nullIdentifier) ==> recorded:=FALSE);
   Expanded_List_Substitution(Machine(RemoteControlSystem),recordSignal)==(signal: SIGNAL & key: CONTROL_KEYS | keyMap:=keyMap<+{key|->signal});
@@ -185,17 +185,17 @@ THEORY ListSubstitutionX IS
   List_Substitution(Machine(RemoteControlSystem),recordSignal)==(keyMap:=keyMap<+{key|->signal});
   List_Substitution(Machine(RemoteControlSystem),recordKeyIdentifier)==(IF ident/:ran(keyName) or ident = nullIdentifier THEN keyName:=keyName<+{key|->ident} || recorded:=TRUE ELSE recorded:=FALSE END);
   List_Substitution(Machine(RemoteControlSystem),showKeyIdentifier)==(ident:=keyName(key));
-  List_Substitution(Machine(RemoteControlSystem),exportConfigurations)==(controlConfigurations:=%key.(key: CONTROL_KEYS | keyMap(key),keyName(key)));
-  List_Substitution(Machine(RemoteControlSystem),importConfigurations)==(keyMap:=keyMap<+{key,sign | key: CONTROL_KEYS & sign: SIGNAL & #ident.(ident: IDENTIFIER & key|->(sign|->ident): ctrlConfigs)} || keyName:=keyName<+{key,ident | key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): ctrlConfigs)});
-  List_Substitution(Machine(RemoteControlSystem),saveCurrentProfile)==(savedProfiles:=savedProfiles<+{ident|->%key.(key: CONTROL_KEYS | keyMap(key),keyName(key))});
-  List_Substitution(Machine(RemoteControlSystem),loadProfile)==(IF profileIdent: dom(savedProfiles) THEN keyMap:=keyMap<+{key,sign | key: CONTROL_KEYS & sign: SIGNAL & #ident.(ident: IDENTIFIER & key|->(sign|->ident): savedProfiles(profileIdent))} || keyName:=keyName<+{key,ident | key: CONTROL_KEYS & ident: IDENTIFIER & #sign.(sign: SIGNAL & key|->(sign|->ident): savedProfiles(profileIdent))} || currentProfileIdent:=profileIdent || success:=TRUE ELSE success:=FALSE END);
+  List_Substitution(Machine(RemoteControlSystem),exportConfigurations)==(keysToSignals,keysToIdentifiers:=keyMap,keyName);
+  List_Substitution(Machine(RemoteControlSystem),importConfigurations)==(keyMap,keyName:=keysToSignals,keysToIds);
+  List_Substitution(Machine(RemoteControlSystem),saveCurrentProfile)==(savedProfilesSignals:=savedProfilesSignals<+{ident|->keyMap} || savedProfilesNames:=savedProfilesNames<+{ident|->keyName});
+  List_Substitution(Machine(RemoteControlSystem),loadProfile)==(IF profileIdent: dom(savedProfilesSignals) THEN keyMap:=savedProfilesSignals(profileIdent) || keyName:=savedProfilesNames(profileIdent) || currentProfileIdent:=profileIdent || success:=TRUE ELSE success:=FALSE END);
   List_Substitution(Machine(RemoteControlSystem),showCurrentProfileIdentification)==(currentProfileName:=currentProfileIdent)
 END
 &
 THEORY ListConstantsX IS
-  List_Valuable_Constants(Machine(RemoteControlSystem))==(TEMPERATURE,maxTemperature,minTemperature,CONTROL_KEYS,SPECIAL_KEYS,CONTROL_CONFIGURATION,nullSignal,nullIdentifier,incKey,decKey,setKey,defaultProfile);
+  List_Valuable_Constants(Machine(RemoteControlSystem))==(TEMPERATURE,maxTemperature,minTemperature,CONTROL_KEYS,SPECIAL_KEYS,KEYS_TO_SIGNALS,KEYS_TO_IDENTIFIERS,nullSignal,nullIdentifier,incKey,decKey,setKey,defaultProfile);
   Inherited_List_Constants(Machine(RemoteControlSystem))==(?);
-  List_Constants(Machine(RemoteControlSystem))==(TEMPERATURE,maxTemperature,minTemperature,CONTROL_KEYS,SPECIAL_KEYS,CONTROL_CONFIGURATION,nullSignal,nullIdentifier,incKey,decKey,setKey,defaultProfile)
+  List_Constants(Machine(RemoteControlSystem))==(TEMPERATURE,maxTemperature,minTemperature,CONTROL_KEYS,SPECIAL_KEYS,KEYS_TO_SIGNALS,KEYS_TO_IDENTIFIERS,nullSignal,nullIdentifier,incKey,decKey,setKey,defaultProfile)
 END
 &
 THEORY ListSetsX IS
@@ -226,7 +226,7 @@ THEORY ListPropertiesX IS
   Abstract_List_Properties(Machine(RemoteControlSystem))==(btrue);
   Context_List_Properties(Machine(RemoteControlSystem))==(btrue);
   Inherited_List_Properties(Machine(RemoteControlSystem))==(btrue);
-  List_Properties(Machine(RemoteControlSystem))==(TEMPERATURE <: INT & card(TEMPERATURE)>2 & maxTemperature = max(TEMPERATURE) & minTemperature = min(TEMPERATURE) & nullSignal: SIGNAL & CONTROL_KEYS <: KEY & nullIdentifier: IDENTIFIER & CONTROL_CONFIGURATION = CONTROL_KEYS*(SIGNAL*IDENTIFIER) & incKey: CONTROL_KEYS & decKey: CONTROL_KEYS & setKey: CONTROL_KEYS & SPECIAL_KEYS = CONTROL_KEYS-{incKey,decKey,setKey} & incKey/=decKey & incKey/=setKey & decKey/=setKey & card(CONTROL_KEYS)>=3 & defaultProfile: PROFILE_IDENTIFIER & SIGNAL: FIN(INTEGER) & not(SIGNAL = {}) & KEY: FIN(INTEGER) & not(KEY = {}) & IDENTIFIER: FIN(INTEGER) & not(IDENTIFIER = {}) & PROFILE_IDENTIFIER: FIN(INTEGER) & not(PROFILE_IDENTIFIER = {}))
+  List_Properties(Machine(RemoteControlSystem))==(TEMPERATURE <: INT & card(TEMPERATURE)>2 & maxTemperature = max(TEMPERATURE) & minTemperature = min(TEMPERATURE) & nullSignal: SIGNAL & CONTROL_KEYS <: KEY & nullIdentifier: IDENTIFIER & KEYS_TO_SIGNALS = CONTROL_KEYS --> SIGNAL & KEYS_TO_IDENTIFIERS = CONTROL_KEYS --> IDENTIFIER & incKey: CONTROL_KEYS & decKey: CONTROL_KEYS & setKey: CONTROL_KEYS & SPECIAL_KEYS = CONTROL_KEYS-{incKey,decKey,setKey} & incKey/=decKey & incKey/=setKey & decKey/=setKey & card(CONTROL_KEYS)>=3 & defaultProfile: PROFILE_IDENTIFIER & SIGNAL: FIN(INTEGER) & not(SIGNAL = {}) & KEY: FIN(INTEGER) & not(KEY = {}) & IDENTIFIER: FIN(INTEGER) & not(IDENTIFIER = {}) & PROFILE_IDENTIFIER: FIN(INTEGER) & not(PROFILE_IDENTIFIER = {}))
 END
 &
 THEORY ListSeenInfoX END
@@ -249,9 +249,9 @@ THEORY ListANYVarX IS
 END
 &
 THEORY ListOfIdsX IS
-  List_Of_Ids(Machine(RemoteControlSystem)) == (TEMPERATURE,maxTemperature,minTemperature,CONTROL_KEYS,SPECIAL_KEYS,CONTROL_CONFIGURATION,nullSignal,nullIdentifier,incKey,decKey,setKey,defaultProfile,SIGNAL,KEY,IDENTIFIER,PROFILE_IDENTIFIER | ? | currentProfileIdent,savedProfiles,nameOut,signalOut,keyName,keyMap,currentTemperature | ? | setTemperature,increaseTemperature,decreaseTemperature,showTemperature,pressSpecialKey,recordSignal,recordKeyIdentifier,showKeyIdentifier,exportConfigurations,importConfigurations,saveCurrentProfile,loadProfile,showCurrentProfileIdentification | ? | ? | ? | RemoteControlSystem);
+  List_Of_Ids(Machine(RemoteControlSystem)) == (TEMPERATURE,maxTemperature,minTemperature,CONTROL_KEYS,SPECIAL_KEYS,KEYS_TO_SIGNALS,KEYS_TO_IDENTIFIERS,nullSignal,nullIdentifier,incKey,decKey,setKey,defaultProfile,SIGNAL,KEY,IDENTIFIER,PROFILE_IDENTIFIER | ? | currentProfileIdent,savedProfilesNames,savedProfilesSignals,nameOut,signalOut,keyName,keyMap,currentTemperature | ? | setTemperature,increaseTemperature,decreaseTemperature,showTemperature,pressSpecialKey,recordSignal,recordKeyIdentifier,showKeyIdentifier,exportConfigurations,importConfigurations,saveCurrentProfile,loadProfile,showCurrentProfileIdentification | ? | ? | ? | RemoteControlSystem);
   List_Of_HiddenCst_Ids(Machine(RemoteControlSystem)) == (? | ?);
-  List_Of_VisibleCst_Ids(Machine(RemoteControlSystem)) == (TEMPERATURE,maxTemperature,minTemperature,CONTROL_KEYS,SPECIAL_KEYS,CONTROL_CONFIGURATION,nullSignal,nullIdentifier,incKey,decKey,setKey,defaultProfile);
+  List_Of_VisibleCst_Ids(Machine(RemoteControlSystem)) == (TEMPERATURE,maxTemperature,minTemperature,CONTROL_KEYS,SPECIAL_KEYS,KEYS_TO_SIGNALS,KEYS_TO_IDENTIFIERS,nullSignal,nullIdentifier,incKey,decKey,setKey,defaultProfile);
   List_Of_VisibleVar_Ids(Machine(RemoteControlSystem)) == (? | ?);
   List_Of_Ids_SeenBNU(Machine(RemoteControlSystem)) == (?: ?)
 END
@@ -261,16 +261,16 @@ THEORY SetsEnvX IS
 END
 &
 THEORY ConstantsEnvX IS
-  Constants(Machine(RemoteControlSystem)) == (Type(TEMPERATURE) == Cst(SetOf(btype(INTEGER,"[TEMPERATURE","]TEMPERATURE")));Type(maxTemperature) == Cst(btype(INTEGER,?,?));Type(minTemperature) == Cst(btype(INTEGER,?,?));Type(CONTROL_KEYS) == Cst(SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")));Type(SPECIAL_KEYS) == Cst(SetOf(atype(KEY,"[SPECIAL_KEYS","]SPECIAL_KEYS")));Type(CONTROL_CONFIGURATION) == Cst(SetOf(atype(KEY,?,?)*(atype(SIGNAL,?,?)*atype(IDENTIFIER,?,?))));Type(nullSignal) == Cst(atype(SIGNAL,?,?));Type(nullIdentifier) == Cst(atype(IDENTIFIER,?,?));Type(incKey) == Cst(atype(KEY,?,?));Type(decKey) == Cst(atype(KEY,?,?));Type(setKey) == Cst(atype(KEY,?,?));Type(defaultProfile) == Cst(atype(PROFILE_IDENTIFIER,?,?)))
+  Constants(Machine(RemoteControlSystem)) == (Type(TEMPERATURE) == Cst(SetOf(btype(INTEGER,"[TEMPERATURE","]TEMPERATURE")));Type(maxTemperature) == Cst(btype(INTEGER,?,?));Type(minTemperature) == Cst(btype(INTEGER,?,?));Type(CONTROL_KEYS) == Cst(SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")));Type(SPECIAL_KEYS) == Cst(SetOf(atype(KEY,"[SPECIAL_KEYS","]SPECIAL_KEYS")));Type(KEYS_TO_SIGNALS) == Cst(SetOf(SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")*atype(SIGNAL,"[SIGNAL","]SIGNAL"))));Type(KEYS_TO_IDENTIFIERS) == Cst(SetOf(SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")*atype(IDENTIFIER,"[IDENTIFIER","]IDENTIFIER"))));Type(nullSignal) == Cst(atype(SIGNAL,?,?));Type(nullIdentifier) == Cst(atype(IDENTIFIER,?,?));Type(incKey) == Cst(atype(KEY,?,?));Type(decKey) == Cst(atype(KEY,?,?));Type(setKey) == Cst(atype(KEY,?,?));Type(defaultProfile) == Cst(atype(PROFILE_IDENTIFIER,?,?)))
 END
 &
 THEORY VariablesEnvX IS
-  Variables(Machine(RemoteControlSystem)) == (Type(currentProfileIdent) == Mvl(atype(PROFILE_IDENTIFIER,?,?));Type(savedProfiles) == Mvl(SetOf(atype(PROFILE_IDENTIFIER,?,?)*SetOf(atype(KEY,?,?)*(atype(SIGNAL,?,?)*atype(IDENTIFIER,?,?)))));Type(nameOut) == Mvl(atype(IDENTIFIER,?,?));Type(signalOut) == Mvl(atype(SIGNAL,?,?));Type(keyName) == Mvl(SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")*atype(IDENTIFIER,"[IDENTIFIER","]IDENTIFIER")));Type(keyMap) == Mvl(SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")*atype(SIGNAL,"[SIGNAL","]SIGNAL")));Type(currentTemperature) == Mvl(btype(INTEGER,?,?)))
+  Variables(Machine(RemoteControlSystem)) == (Type(currentProfileIdent) == Mvl(atype(PROFILE_IDENTIFIER,?,?));Type(savedProfilesNames) == Mvl(SetOf(atype(PROFILE_IDENTIFIER,?,?)*SetOf(atype(KEY,?,?)*atype(IDENTIFIER,?,?))));Type(savedProfilesSignals) == Mvl(SetOf(atype(PROFILE_IDENTIFIER,?,?)*SetOf(atype(KEY,?,?)*atype(SIGNAL,?,?))));Type(nameOut) == Mvl(atype(IDENTIFIER,?,?));Type(signalOut) == Mvl(atype(SIGNAL,?,?));Type(keyName) == Mvl(SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")*atype(IDENTIFIER,"[IDENTIFIER","]IDENTIFIER")));Type(keyMap) == Mvl(SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")*atype(SIGNAL,"[SIGNAL","]SIGNAL")));Type(currentTemperature) == Mvl(btype(INTEGER,?,?)))
 END
 &
 THEORY OperationsEnvX IS
-  Operations(Machine(RemoteControlSystem)) == (Type(showCurrentProfileIdentification) == Cst(atype(PROFILE_IDENTIFIER,?,?),No_type);Type(loadProfile) == Cst(btype(BOOL,?,?),atype(PROFILE_IDENTIFIER,?,?));Type(saveCurrentProfile) == Cst(No_type,atype(PROFILE_IDENTIFIER,?,?));Type(importConfigurations) == Cst(No_type,SetOf(atype(KEY,?,?)*(atype(SIGNAL,?,?)*atype(IDENTIFIER,?,?))));Type(exportConfigurations) == Cst(SetOf(atype(KEY,?,?)*(atype(SIGNAL,?,?)*atype(IDENTIFIER,?,?))),No_type);Type(showKeyIdentifier) == Cst(atype(IDENTIFIER,?,?),atype(KEY,?,?));Type(recordKeyIdentifier) == Cst(btype(BOOL,?,?),atype(KEY,?,?)*atype(IDENTIFIER,?,?));Type(recordSignal) == Cst(No_type,atype(SIGNAL,?,?)*atype(KEY,?,?));Type(pressSpecialKey) == Cst(No_type,atype(KEY,?,?));Type(showTemperature) == Cst(btype(INTEGER,?,?),No_type);Type(decreaseTemperature) == Cst(No_type,No_type);Type(increaseTemperature) == Cst(No_type,No_type);Type(setTemperature) == Cst(No_type,btype(INTEGER,?,?)));
-  Observers(Machine(RemoteControlSystem)) == (Type(showCurrentProfileIdentification) == Cst(atype(PROFILE_IDENTIFIER,?,?),No_type);Type(exportConfigurations) == Cst(SetOf(atype(KEY,?,?)*(atype(SIGNAL,?,?)*atype(IDENTIFIER,?,?))),No_type);Type(showKeyIdentifier) == Cst(atype(IDENTIFIER,?,?),atype(KEY,?,?));Type(showTemperature) == Cst(btype(INTEGER,?,?),No_type))
+  Operations(Machine(RemoteControlSystem)) == (Type(showCurrentProfileIdentification) == Cst(atype(PROFILE_IDENTIFIER,?,?),No_type);Type(loadProfile) == Cst(btype(BOOL,?,?),atype(PROFILE_IDENTIFIER,?,?));Type(saveCurrentProfile) == Cst(No_type,atype(PROFILE_IDENTIFIER,?,?));Type(importConfigurations) == Cst(No_type,SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")*atype(SIGNAL,"[SIGNAL","]SIGNAL"))*SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")*atype(IDENTIFIER,"[IDENTIFIER","]IDENTIFIER")));Type(exportConfigurations) == Cst(SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")*atype(SIGNAL,"[SIGNAL","]SIGNAL"))*SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")*atype(IDENTIFIER,"[IDENTIFIER","]IDENTIFIER")),No_type);Type(showKeyIdentifier) == Cst(atype(IDENTIFIER,?,?),atype(KEY,?,?));Type(recordKeyIdentifier) == Cst(btype(BOOL,?,?),atype(KEY,?,?)*atype(IDENTIFIER,?,?));Type(recordSignal) == Cst(No_type,atype(SIGNAL,?,?)*atype(KEY,?,?));Type(pressSpecialKey) == Cst(No_type,atype(KEY,?,?));Type(showTemperature) == Cst(btype(INTEGER,?,?),No_type);Type(decreaseTemperature) == Cst(No_type,No_type);Type(increaseTemperature) == Cst(No_type,No_type);Type(setTemperature) == Cst(No_type,btype(INTEGER,?,?)));
+  Observers(Machine(RemoteControlSystem)) == (Type(showCurrentProfileIdentification) == Cst(atype(PROFILE_IDENTIFIER,?,?),No_type);Type(exportConfigurations) == Cst(SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")*atype(SIGNAL,"[SIGNAL","]SIGNAL"))*SetOf(atype(KEY,"[CONTROL_KEYS","]CONTROL_KEYS")*atype(IDENTIFIER,"[IDENTIFIER","]IDENTIFIER")),No_type);Type(showKeyIdentifier) == Cst(atype(IDENTIFIER,?,?),atype(KEY,?,?));Type(showTemperature) == Cst(btype(INTEGER,?,?),No_type))
 END
 &
 THEORY TCIntRdX IS

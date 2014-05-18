@@ -1,38 +1,32 @@
 ﻿THEORY BalanceX IS
-  RemoteControlSystem,35,0,0,19,5,0,0;
-  Initialisation,6,0,0,3,3,0,0;
+  RemoteControlSystem,29,0,0,22,6,0,0;
+  Initialisation,7,0,0,3,4,0,0;
   setTemperature,2,0,0,2,0,0,0;
   increaseTemperature,3,0,0,3,0,0,0;
   decreaseTemperature,3,0,0,3,0,0,0;
   showTemperature,0,0,0,0,0,0,0;
   pressSpecialKey,2,0,0,2,0,0,0;
-  recordSignal,2,0,0,2,0,0,0;
-  recordKeyIdentifier,6,0,0,4,2,0,0;
+  recordSignal,1,0,0,1,0,0,0;
+  recordKeyIdentifier,4,0,0,2,2,0,0;
   showKeyIdentifier,0,0,0,0,0,0,0;
   exportConfigurations,0,0,0,0,0,0,0;
-  importConfigurations,5,0,0,0,0,0,0;
-  saveCurrentProfile,1,0,0,0,0,0,0;
-  loadProfile,5,0,0,0,0,0,0;
+  importConfigurations,0,0,0,0,0,0,0;
+  saveCurrentProfile,4,0,0,3,0,0,0;
+  loadProfile,3,0,0,3,0,0,0;
   showCurrentProfileIdentification,0,0,0,0,0,0,0
 END
 &
 THEORY ProofState IS
+  Proved(0);
+  Proved(0);
+  Proved(0);
   Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Unproved;
-  Proved(1);
+  Proved(0);
   Proved(0);
   Proved(0);
   Proved(1);
   Proved(0);
+  Proved(1);
   Proved(0);
   Proved(0);
   Proved(0);
@@ -48,24 +42,18 @@ THEORY ProofState IS
   Proved(0);
   Proved(0);
   Proved(1);
-  Proved(0);
   Proved(1);
   Proved(0);
+  Proved(1);
   Proved(1)
 END
 &
 THEORY MethodList IS
+  pr;
+  pr;
+  pr;
   ?;
-  ?;
-  ?;
-  ?;
-  ?;
-  ?;
-  ?;
-  ?;
-  ?;
-  ?;
-  ?;
+  pr;
   pr;
   pr;
   pr;
@@ -93,19 +81,14 @@ THEORY MethodList IS
 END
 &
 THEORY PassList IS
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(0),(?;0;1;2;3);
-  Force(1),(?;0);
   Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(0),(?;0;1;2;3);
+  Force(0),?;
+  Force(0),?;
+  Force(0),?;
+  Force(1),(?;0);
   Force(0),?;
   Force(1),(?;0);
   Force(0),?;
@@ -122,11 +105,10 @@ THEORY PassList IS
   Force(0),?;
   Force(0),?;
   Force(0),?;
-  Force(0),?;
+  Force(1),?;
   Force(1),?;
   Force(0),?;
   Force(1),?;
-  Force(0),?;
   Force(1),?
 END
 &
