@@ -1,0 +1,162 @@
+REFINEMENT
+   RemoteControlSystem_r
+REFINES
+   RemoteControlSystem
+
+SEES
+   TemperatureType ,
+   SignalType ,
+   KeyType ,
+   IdentifierType ,
+   ProfileIdentifierType, 
+   KeysToIdentifierType, 
+   KeysToSignalsType
+INCLUDES TemperatureManager, ControlConfiguration(saveProfilesLimit), ControlUserInterface, AirSignalController
+
+INVARIANT 
+    /** Ligação de variáveis da máquina abstrata com variáveis de TemperatureManager*/
+    currentTemperature = currentTemp
+    & maxTemperature = maxTemp
+    & minTemperature = minTemp
+    /** Ligação de variáveis da máquina abstrata com variáveis de ControlConfiguration*/
+    & keyMap = keysToSignal
+    & keyName = keysToIdentifier
+    & currentProfileIdent = currentProfile
+    & savedProfilesSignals = profileSignals
+    & savedProfilesNames = profileNames
+    /** Ligação com máquina ControlUserInterface*/
+    & temperatureView = currentTemperature
+    & keyIdentifierView = nameOut
+    & profileIdentView = currentProfileIdent
+INITIALISATION
+   ANY temp
+   WHERE
+       temp : TEMPERATURES & temp >= minTemperature &  temp <= maxTemperature
+   THEN
+       setTemperatures(temp, minTemperature,maxTemperature)
+       ;
+       showTemperature(temp)
+   END
+   ;
+   showKey(nullIdentifier)
+   ;
+   /** funcao exige parametro de retorno*/
+   VAR result IN
+       result <-- saveProfile(defaultProfile)
+   END
+   ;
+   showProfile(defaultProfile)
+
+OPERATIONS
+result <-- increaseTemperature =
+    IF currentTemp + 1 <= maxTemperature 
+        &  currentTemp + 1 : TEMPERATURES 
+    THEN
+        VAR newTemperature IN
+            newTemperature := currentTemp+1
+            ;
+            setCurrentTemperature(newTemperature)
+            ;
+            sendTemperatureSignal(newTemperature)
+            ;
+            showTemperature(newTemperature)
+            ;
+            VAR keyIdent IN
+                keyIdent <-- getKeyIdentifier(incKey);
+                showKey(keyIdent)
+            END
+            ;
+            result := TRUE
+        END
+    ELSE
+        result := FALSE
+    END;
+    
+result <-- decreaseTemperature =
+    IF currentTemp - 1 >= minTemperature 
+        &  currentTemp - 1 : TEMPERATURES 
+    THEN
+        setCurrentTemperature(currentTemp-1)
+        ||
+        sendTemperatureSignal(currentTemp - 1)
+        ||
+        showTemperature(currentTemp - 1)
+        ;
+        VAR keyIdent IN
+            keyIdent <-- getKeyIdentifier(decKey);
+            showKey(keyIdent)
+        END
+        ||
+        result := TRUE
+    ELSE
+        result := FALSE
+    END;
+
+temp <-- showCurrentTemperature =
+    VAR someTemp IN
+       someTemp <-- getCurrentTemperature ;
+       temp := someTemp       
+   END;
+
+pressSpecialKey ( key ) =
+    PRE key : SPECIAL_KEYS
+    THEN
+        VAR sign IN
+            sign <-- getKeySignal(key);
+            sendSignal(sign)
+        END
+        ;
+        VAR keyIdent IN
+            keyIdent <-- getKeyIdentifier(key)
+            ;
+            showKey(keyIdent)
+        END
+    END;
+
+recordSignal ( signal , key ) =
+       setKeySignal(key,signal);
+
+recorded <-- recordKeyIdentifier ( key , ident ) =
+   IF ident /: ran (keysToIdentifier) or ident = nullIdentifier
+   THEN
+       VAR result IN
+           result <-- setKeyIdentifier(key,ident)
+       END
+       ||
+       recorded := TRUE
+   ELSE
+       recorded := FALSE
+   END;
+
+ident <-- showKeyIdentifier ( key ) =
+   ident <-- getKeyIdentifier( key );
+
+keysToSignals , keysToIdentifiers <-- exportConfigurations =
+   keysToSignals , keysToIdentifiers <-- getConfigurations;
+
+importConfigurations ( keysToSignals , keysToIds ) =
+   setConfigurations(keysToSignals, keysToIds);
+
+success <-- saveCurrentProfile ( ident ) =
+   VAR result IN
+       result <-- saveProfile(ident);
+       IF(result = TRUE) THEN
+           showProfile(ident)
+       END;
+       success := result
+   END;
+
+success <-- loadProfileToCurrent ( profileIdent ) =
+   VAR result IN
+       result <-- loadProfile(profileIdent);
+       IF(result = TRUE) THEN           
+           showProfile(profileIdent)
+       END;
+       success := result
+   END;
+
+currentProfileName <-- showCurrentProfileIdentification =
+   currentProfileName <-- getCurrentProfile
+
+
+END
