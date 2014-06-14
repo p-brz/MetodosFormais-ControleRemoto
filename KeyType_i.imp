@@ -1,0 +1,21 @@
+IMPLEMENTATION
+   KeyType_i
+REFINES
+   KeyType
+VALUES
+    KEYS = 0..10;
+    incKey = 1;
+    decKey = 2;
+    keysCount = 8;
+    SPECIAL_KEYS = 3..10;
+    nullKey = 0
+
+OPERATIONS
+result <-- isASpecialKey(key)=
+    IF key <= 10 & key >= 3 THEN
+        result := TRUE
+    ELSE
+        result := FALSE
+    END
+
+END

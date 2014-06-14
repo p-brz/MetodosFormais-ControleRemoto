@@ -1,0 +1,96 @@
+IMPLEMENTATION
+   AirSignalController_i
+REFINES
+   AirSignalController_r
+
+SEES
+   SignalType ,
+   TemperatureType
+
+CONCRETE_VARIABLES
+   signalOut ,
+   allowedSignalsSeq ,
+   possibleSignals,
+   temperaturePulses
+
+INITIALISATION
+   ANY signalSeq
+   WHERE
+       signalSeq : iseq ( SIGNALS ) & size ( signalSeq ) = maxSignals & nullSignal /: ran ( signalSeq )
+   THEN
+       possibleSignals := signalSeq
+   END ;
+   allowedSignalsSeq := {} ||
+   signalOut := nullSignal
+
+OPERATIONS
+sended <-- sendTemperatureSignal ( temp ) =
+   BEGIN
+       /*ANY sign
+       WHERE
+           sign : SIGNALS
+       THEN
+           IF sign /= nullSignal
+           THEN
+               signalOut := sign ||
+               sended := TRUE
+           ELSE
+               sended := FALSE
+           END
+       END*/
+       sended := FALSE
+   END
+   ;
+
+signal <-- receiveSignal =
+   BEGIN
+       IF size ( possibleSignals ) > 0
+       THEN
+           CHOICE
+               allowedSignalsSeq := allowedSignalsSeq ^ ( possibleSignals /|\ 1 ) ||
+               possibleSignals := possibleSignals \|/ 1 ;
+               signal := last ( allowedSignalsSeq )
+           OR
+               signal := nullSignal
+           END
+       ELSE
+           signal := nullSignal
+       END
+   END
+   ;
+
+freeSignal ( signal ) =
+   BEGIN
+       IF signal : ran ( allowedSignalsSeq ) & signal /= nullSignal
+       THEN
+           ANY signalSeq
+           WHERE
+               signalSeq : iseq ( SIGNALS ) & dom ( signalSeq ) = 1 .. size ( allowedSignalsSeq ) - 1 & ran ( signalSeq ) = ran ( allowedSignalsSeq ) - { signal }
+           THEN
+               allowedSignalsSeq := signalSeq ;
+               possibleSignals := signal -> possibleSignals
+           END
+       END
+   END
+   ;
+
+result <-- isAValidSignal ( sign ) =
+   BEGIN
+       IF sign : ran ( allowedSignalsSeq )
+       THEN
+           result := TRUE
+       ELSE
+           result := FALSE
+       END
+   END
+   ;
+
+   sendSignal ( signal ) =
+   PRE
+       signal : SIGNALS & signal : ran ( allowedSignalsSeq )
+   THEN
+       signalOut := signal
+   END
+
+
+END

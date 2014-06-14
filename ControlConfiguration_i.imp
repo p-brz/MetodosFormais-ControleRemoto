@@ -1,0 +1,229 @@
+IMPLEMENTATION
+   ControlConfiguration_i(profilesLimit)
+REFINES
+   ControlConfiguration
+
+SEES
+   KeyType ,
+   SignalType ,
+   ProfileIdentifierType ,
+   IdentifierType ,
+   KeysToSignalsType ,
+   KeysToIdentifierType
+
+CONSTANTS
+    maxKeys
+
+VALUES
+    maxKeys = 20
+
+PROPERTIES
+    maxKeys : NAT1
+CONCRETE_VARIABLES
+    
+   /*keysToSignal ,
+   keysToIdentifier ,
+   profileSignals ,
+   profileNames ,*/
+   
+    keys,
+    keysSignals,
+    keysIdentifiers,
+    countKeys,
+    /*profiles,
+    profilesSignsArr,
+    profilesNamesArr,*/
+   currentProfile
+
+INVARIANT
+    keys : 1.. maxKeys --> KEYS & 
+    keysSignals:  1.. maxKeys --> SIGNALS &
+    keysIdentifiers : 1.. maxKeys --> CMD_IDENTIFIER & 
+    countKeys : NAT &
+    keys[1..countKeys] = dom(keysToSignal) &
+    keysSignals[1..countKeys] = ran(keysToSignal) &
+    keysIdentifiers[1..countKeys] = ran(keysIdentifiers)
+    /*&
+    profiles : 1.. profilesLimit --> PROFILES &
+    profilesSignsArr &
+    profilesNamesArr &*/
+
+INITIALISATION
+   countKeys := 0;
+   VAR ii IN
+       ii:=0;
+       WHILE ii < maxKeys DO
+           ii := ii + 1;
+           keys(ii) := nullKey;
+           keysSignals(ii) := nullSignal;
+           keysIdentifiers(ii) := nullIdentifier
+       INVARIANT 
+            keys[1..ii] = {nullKey} &
+            keysSignals[1..ii] = {nullSignal} &
+            keysIdentifiers[1..ii] = {nullIdentifier}
+       VARIANT maxKeys - ii
+       END
+   END;
+   currentProfile := nullProfileIdentifier
+
+OPERATIONS
+signal <-- getKeySignal ( key ) =
+   BEGIN
+       
+       VAR ii, found IN
+           ii:=0;
+           found := 0;
+           WHILE ii < countKeys & found = 0 DO
+               ii := ii + 1;
+               VAR item IN
+                   item := keys(ii);
+                   IF item = key THEN
+                       found := ii
+                   END
+               END
+           INVARIANT
+               found > 0 <=> (key : keys[1..ii])
+           VARIANT countKeys - ii
+           END;
+           
+           IF found > 0 THEN
+               signal := keysSignals(found)
+           ELSE
+               signal := nullSignal
+           END
+       END
+   END
+   ;
+
+   changed <-- setKeySignal ( key , signal ) =
+   BEGIN/** rever: (key pode ja estar no array) */
+       IF signal /= nullSignal & keysCount < maxKeys
+       THEN
+           countKeys := countKeys + 1;
+           keys(countKeys) := key;
+           keysSignals(countKeys) := signal;
+           changed := TRUE
+       ELSE
+           changed := FALSE
+       END
+   END
+   ;
+
+removeKeySignal ( key ) =
+   BEGIN
+       /*TODO*/
+       skip
+       /*IF key : dom ( keysToSignal )
+       THEN
+           keysToSignal := { key } <<| keysToSignal
+       END*/
+   END
+   ;
+
+   ident <-- getKeyIdentifier ( key ) =
+   BEGIN       
+       VAR ii, found IN
+           ii:=0;
+           found := 0;
+           WHILE ii < countKeys & found = 0 DO
+               ii := ii + 1;
+               VAR item IN
+                   item := keys(ii);
+                   IF item = key THEN
+                       found := ii
+                   END
+               END
+           INVARIANT
+               found > 0 <=> (key : keys[1..ii])
+           VARIANT countKeys - ii
+           END;
+           
+           IF found > 0 THEN
+               ident := keysIdentifiers(found)
+           ELSE
+               ident := nullIdentifier
+           END
+       END
+   END
+   ;
+
+recorded <-- setKeyIdentifier ( key , ident ) =
+   BEGIN
+       /*IF ident /= nullIdentifier &  ident /: ran ( keysToIdentifier )
+       THEN
+           keysToIdentifier ( key ) := ident ;
+           recorded := TRUE
+       ELSE
+           recorded := FALSE
+       END*/
+       //TODO:
+       recorded := FALSE
+   END
+   ;
+
+   removeKeyIdentifier ( key ) =
+   BEGIN
+       /*IF key : dom ( keysToIdentifier )
+       THEN
+           keysToIdentifier := { key } <<| keysToIdentifier
+       END*/
+       //TODO
+       skip
+   END
+   ;
+
+   saveProfile ( ident ) =
+   BEGIN
+       /*profileSignals ( ident ) := keysToSignal;
+       profileNames ( ident ) := keysToIdentifier;
+       currentProfile := ident*/
+       skip
+   END
+   ;
+
+   loaded <-- loadProfile ( profileIdent ) =
+   BEGIN
+       /*IF profileIdent /= nullProfileIdentifier &  profileIdent : dom ( profileSignals )
+       THEN
+           IF profileIdent /= defaultProfile
+           THEN
+               keysToSignal := profileSignals ( profileIdent );
+               keysToIdentifier := profileNames ( profileIdent )
+           ELSE
+               keysToSignal := {};
+               keysToIdentifier := {}
+           END ;
+           currentProfile := profileIdent ;
+           loaded := TRUE
+       ELSE
+           loaded := FALSE
+       END*/
+       //TODO
+       loaded := FALSE
+   END
+   ;
+
+   contains <-- containsProfile ( profileIdent ) =
+   BEGIN
+       /*IF profileIdent /= nullProfileIdentifier &  profileIdent : dom ( profileSignals )
+       THEN
+           contains := TRUE
+       ELSE
+           contains := FALSE
+       END*/
+       //TODO
+       contains := FALSE
+   END
+   ;
+
+   count <-- profileCount =
+       /*count := card ( dom ( profileSignals ) )*/
+       //TODO
+       count := 0
+   ;
+
+   profileName <-- getCurrentProfile =
+       profileName := currentProfile
+
+
+END

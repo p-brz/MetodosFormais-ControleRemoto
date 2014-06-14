@@ -39,7 +39,9 @@ showProfile(profileId) =
     PRE profileId : PROFILE_IDENTIFIER
     THEN
         profileIdentView := profileId
-    END
-
+    END;
+refreshInterface = /*TODO*/
+    skip
+    
     
 END

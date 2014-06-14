@@ -1,0 +1,10 @@
+IMPLEMENTATION
+   TemperatureType_i
+REFINES
+   TemperatureType
+VALUES
+    TEMPERATURES = INT;
+    maxTemperature = 32;
+    minTemperature = 16;
+    ALLOWED_TEMPS = 16..32
+END

@@ -1,0 +1,149 @@
+IMPLEMENTATION
+   AirSignalController__i
+REFINES
+   AirSignalController_2r
+
+IMPORTS InfraredLibrary
+    
+SEES
+   SignalType, 
+   TemperatureType ,
+   PulseType
+
+VALUES
+    maxSignals = 20
+
+CONCRETE_VARIABLES
+   signalOut ,
+   tempSignal ,
+   
+   
+   signals,
+   signalsPulsesArr,
+   signalsSizesArr,
+   contSignals,
+   
+   lastSignal
+
+INVARIANT
+    lastSignal : SIGNALS
+    & contSignals : NAT
+    & contSignals <= maxSignals
+    & signals : 1..maxSignals --> SIGNALS
+    & signals[1..contSignals] = dom(signalsPulses)
+    & signals[1..contSignals] = dom(signalsSize)
+    
+    & signalsPulsesArr : 1..(maxSignals*maxSignalPulses) --> PULSES
+    & !ii.(ii : 0..contSignals-1 => 
+        signalsPulsesArr[ii*maxSignalPulses + 1 .. (ii+1)*maxSignalPulses] = ran(signalsPulses(signals(ii))))
+    & dom(signalsPulses) = signals[1..contSignals]
+    
+    & signalsSizesArr : 1..maxSignals --> NAT
+    & dom(signalsSize) = signals[1..contSignals]
+    & ran(signalsSize) = signalsSizesArr[1..contSignals] 
+    
+    & contSignals = size ( signalsPulses )
+
+INITIALISATION
+    lastSignal := 1;
+   tempSignal := lastSignal + 1; 
+   
+   VAR ii IN
+       ii:=0;
+       WHILE ii < maxSignals DO
+           ii := ii + 1;
+           signalsSizesArr(ii) := 0
+           
+       INVARIANT 
+           signalsSizesArr = (1..ii) * {0}
+           &
+           signals = (1..ii) * {nullSignal}
+       VARIANT maxSignals - ii
+       END
+   END;
+   
+   VAR jj, sizeArr IN
+       jj:=0;
+       sizeArr := maxSignals*maxSignalPulses;
+       WHILE jj < sizeArr DO
+           jj := jj + 1;
+           signalsPulsesArr(jj) := 0
+       INVARIANT 
+           signalsPulsesArr[1..jj] = {defaultPulse}
+       VARIANT maxSignals*maxSignalPulses - jj
+       END
+   END;
+   signals(1) := tempSignal;
+   contSignals := 1;
+   signalOut := nullSignal 
+
+OPERATIONS
+   sended <-- sendTemperatureSignal ( temp ) =
+   BEGIN
+       signalOut := tempSignal ;
+       sended := TRUE
+   END
+   ;
+
+signal <-- receiveSignal =
+   BEGIN
+       /*IF size ( signalsPulses ) < maxSignals THEN
+           skip
+       END
+       
+       ANY pulses , sign , numPulses
+       WHERE
+           sign : SIGNALS & sign /: dom ( signalsPulses ) & pulses : ( 1 .. maxSignalPulses --> PULSES ) & numPulses : NAT & numPulses <= maxSignalPulses
+       THEN
+           IF sign /= nullSignal &  size ( signalsPulses ) < maxSignals
+           THEN
+               signalsPulses ( sign ) := pulses ||
+               signalsSize ( sign ) := numPulses ||
+               signal := sign
+           ELSE
+               signal := nullSignal
+           END
+       END*/
+       signal := nullSignal
+   END
+   ;
+
+freeSignal ( signal ) =
+   BEGIN
+       /*IF signal : dom ( signalsPulses ) & signal /= nullSignal
+       THEN
+           signalsPulses := { signal } <<| signalsPulses ||
+           signalsSize := { signal } <<| signalsSize
+       END*/
+       skip
+   END
+   ;
+
+result <-- isAValidSignal ( sign ) =
+    BEGIN
+    result := FALSE;
+    VAR ii IN
+       ii:=0;
+       WHILE ii < contSignals DO
+           ii := ii + 1;
+           VAR item IN
+               item := signals(ii);
+               IF item = sign THEN
+                   result := TRUE
+               END
+           END
+       INVARIANT 
+           result = TRUE <=> (sign : signals[1..ii])
+       VARIANT contSignals - ii
+       END
+    END
+   END
+   ;
+
+sendSignal ( signal ) =
+   BEGIN
+       signalOut := signal
+   END
+
+
+END

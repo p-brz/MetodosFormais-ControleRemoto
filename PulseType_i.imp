@@ -1,0 +1,9 @@
+IMPLEMENTATION
+   PulseType_i
+REFINES
+   PulseType
+VALUES
+    PULSES = NAT;
+    defaultPulse = 0;
+    maxSignalPulses = 20
+END

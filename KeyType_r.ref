@@ -1,0 +1,21 @@
+REFINEMENT
+   KeyType_r
+REFINES
+   KeyType
+PROPERTIES
+    KEYS <: NAT
+OPERATIONS
+   result <-- isASpecialKey ( key ) =
+   PRE
+       key : KEYS
+   THEN
+       IF key : SPECIAL_KEYS
+       THEN
+           result := TRUE
+       ELSE
+           result := FALSE
+       END
+   END
+
+
+END

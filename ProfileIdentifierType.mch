@@ -5,7 +5,9 @@
 MACHINE
     ProfileIdentifierType
 SETS PROFILE_IDENTIFIER
-CONSTANTS nullProfileIdentifier
-PROPERTIES nullProfileIdentifier : PROFILE_IDENTIFIER
+CONSTANTS nullProfileIdentifier, defaultProfile
+PROPERTIES nullProfileIdentifier : PROFILE_IDENTIFIER &
+           defaultProfile : PROFILE_IDENTIFIER &
+           nullProfileIdentifier /= nullProfileIdentifier
     
 END

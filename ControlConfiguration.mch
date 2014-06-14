@@ -7,6 +7,8 @@
         - manter nome das teclas
         - manter perfis de controles
         - manter configurações
+        
+   TODO: remover profile
  */
 MACHINE
     ControlConfiguration(profilesLimit)
@@ -15,7 +17,9 @@ SEES KeyType, SignalType, ProfileIdentifierType, IdentifierType, KeysToSignalsTy
 
 CONSTRAINTS
     profilesLimit : NAT1
-
+    
+    
+    
 VARIABLES
     keysToSignal
   , keysToIdentifier
@@ -25,12 +29,21 @@ VARIABLES
 INVARIANT
     keysToSignal : KEYS_TO_SIGNALS
     & keysToIdentifier : KEYS_TO_IDENTIFIERS
+    & nullSignal /: ran(keysToSignal)
+    & nullIdentifier /: ran(keysToIdentifier)
+    
+    & currentProfile : PROFILE_IDENTIFIER
     & profileSignals : PROFILE_IDENTIFIER +-> KEYS_TO_SIGNALS
     & profileNames : PROFILE_IDENTIFIER +-> KEYS_TO_IDENTIFIERS
-    & currentProfile : PROFILE_IDENTIFIER
+    & dom(profileSignals) = dom(profileNames)
+    & !profIdent.(profIdent : dom(profileNames) =>
+                     (nullIdentifier /: ran(profileNames(profIdent)))
+                   & (nullSignal    /: ran(profileSignals(profIdent)))
+                 )  
+    
 INITIALISATION
-    keysToSignal := KEYS * { nullSignal }
-    || keysToIdentifier := KEYS * { nullIdentifier }
+    keysToSignal := {}
+    || keysToIdentifier := {}
     || profileSignals := {}
     || profileNames := {}
     || currentProfile := nullProfileIdentifier
@@ -41,38 +54,56 @@ signal <-- getKeySignal ( key ) =
    PRE
        key : KEYS
    THEN
-       signal := keysToSignal ( key )
+       IF key : dom(keysToSignal) THEN
+           signal := keysToSignal ( key )
+       ELSE
+           signal := nullSignal
+       END
    END;
+
+changed <-- setKeySignal(key, signal) =
+   PRE
+       signal : SIGNALS & key : KEYS
+   THEN
+       IF signal /= nullSignal THEN
+           /*keysToSignal := keysToSignal <+ { key |-> signal }*/
+           keysToSignal(key) := signal
+           ||
+           changed := TRUE
+       ELSE
+           changed := FALSE
+       END
+   END;
+
+removeKeySignal(key) =
+   PRE
+       key : KEYS
+   THEN
+       IF key : dom(keysToSignal) THEN
+           keysToSignal:= {key} <<| keysToSignal
+       END
+   END;
+
+   
 ident <-- getKeyIdentifier ( key ) =
    PRE
        key : KEYS
    THEN
-       ident := keysToIdentifier ( key )
+       IF key : dom(keysToIdentifier) THEN
+           ident := keysToIdentifier ( key )
+       ELSE
+           ident := nullIdentifier
+       END
    END;
    
-signal, ident <-- getKeySignalAndId ( key ) =
-   PRE
-       key : KEYS
-   THEN
-       signal := keysToSignal(key)
-       ||
-       ident := keysToIdentifier ( key )
-   END;
-
-setKeySignal(key, signal) =
-   PRE
-       signal : SIGNALS & key : KEYS
-   THEN
-       keysToSignal := keysToSignal <+ { key |-> signal }
-   END;
-
 recorded <-- setKeyIdentifier ( key , ident ) =
    PRE
        key : KEYS & ident : CMD_IDENTIFIER
    THEN
-       IF ident /: ran ( keysToIdentifier ) or ident = nullIdentifier
+       IF ident /= nullIdentifier 
+	            & ident /: ran(keysToIdentifier)
        THEN
-           keysToIdentifier := keysToIdentifier <+ { key |-> ident } 
+           keysToIdentifier( key) := ident 
            ||
            recorded := TRUE
        ELSE
@@ -80,48 +111,82 @@ recorded <-- setKeyIdentifier ( key , ident ) =
        END
    END;
 
-keysToSignalsOut , keysToIdentifiersOut <-- getConfigurations =
-   keysToSignalsOut , keysToIdentifiersOut := keysToSignal , keysToIdentifier;
+removeKeyIdentifier(key) =
+    PRE key : KEYS
+    THEN
+	    IF key : dom(keysToIdentifier) 
+	    THEN
+            keysToIdentifier := {key} <<| keysToIdentifier
+        END
+    END;
 
-setConfigurations ( keysToSign , keysToIds ) =
-   PRE keysToSign : KEYS_TO_SIGNALS & keysToIds : KEYS_TO_IDENTIFIERS 
-       /** Todos os identificadores são iguais, exceto aqueles que correspondem a nullIdentifier*/
-       & ! ( key1 , key2 ) . ( key1 : KEYS & key2 : KEYS & key1 /= key2 
-               => keysToIds ( key1 ) /= keysToIds ( key2 ) or keysToIds ( key1 ) = nullIdentifier )
-   THEN
-       keysToSignal , keysToIdentifier := keysToSign , keysToIds
-   END;
-
-success <-- saveProfile ( ident ) =
+saveProfile ( ident ) =
    PRE
-       ident : PROFILE_IDENTIFIER
+       ident : PROFILE_IDENTIFIER & 
+       ident /= nullProfileIdentifier &
+       (card ( profileSignals ) < profilesLimit 
+           or ( ident : dom ( profileSignals ) 
+                   & ident : dom ( profileNames ) 
+              ) 
+       )
    THEN
-       IF ( card ( profileSignals ) < profilesLimit or ( ident : dom ( profileSignals ) & ident : dom ( profileNames ) ) )
-       THEN
-           profileSignals := profileSignals <+ { ident |-> keysToSignal } ||
-           profileNames := profileNames <+ { ident |-> keysToIdentifier } ||
-           currentProfile := ident ||
-           success := TRUE
-       ELSE
-           success := FALSE
-       END
+       profileSignals(ident) := keysToSignal ||
+       profileNames(ident) := keysToIdentifier  ||
+       currentProfile := ident
    END
    ;
 
-success <-- loadProfile ( profileIdent ) =
+/*loadProfile ( profileIdent ) =
+   PRE
+       profileIdent : PROFILE_IDENTIFIER &
+       (profileIdent /= nullProfileIdentifier )
+   THEN
+       IF profileIdent : dom ( profileSignals ) THEN
+           keysToSignal := profileSignals ( profileIdent ) ||
+           keysToIdentifier := profileNames ( profileIdent ) ||
+           currentProfile := profileIdent
+       END
+   END;*/
+   
+loaded <-- loadProfile ( profileIdent ) =
    PRE
        profileIdent : PROFILE_IDENTIFIER
    THEN
-       IF ( profileIdent : dom ( profileSignals ) )
+       IF profileIdent /= nullProfileIdentifier & 
+           profileIdent : dom ( profileSignals )
        THEN
-           keysToSignal := profileSignals ( profileIdent ) ||
-           keysToIdentifier := profileNames ( profileIdent ) ||
-           currentProfile := profileIdent ||
-           success := TRUE
+            IF profileIdent /= defaultProfile THEN
+               keysToSignal := profileSignals ( profileIdent ) ||
+               keysToIdentifier := profileNames ( profileIdent )
+            ELSE
+                keysToSignal := {}
+                ||
+                keysToIdentifier := {}
+            END
+            ||
+            currentProfile := profileIdent
+            ||
+            loaded := TRUE
        ELSE
-           success := FALSE
+           loaded := FALSE
+       END
+   END; 
+   
+contains <-- containsProfile(profileIdent) =
+   PRE
+       profileIdent : PROFILE_IDENTIFIER
+   THEN
+       IF profileIdent /= nullProfileIdentifier  & 
+           profileIdent : dom ( profileSignals ) 
+       THEN
+           contains := TRUE
+       ELSE
+           contains := FALSE
        END
    END;
+   
+count <-- profileCount =
+    count := card(dom(profileSignals));
 
 profileName <-- getCurrentProfile =
     profileName := currentProfile

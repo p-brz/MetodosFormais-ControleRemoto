@@ -1,0 +1,26 @@
+IMPLEMENTATION
+    SignalType_i
+REFINES
+    SignalType
+   
+VALUES SIGNALS= NAT; nullSignal = 0
+
+CONCRETE_VARIABLES
+    nextSignal
+   
+INVARIANT nextSignal : SIGNALS
+    & nextSignal /: generatedSignals
+    
+INITIALISATION nextSignal := 1
+   
+OPERATIONS
+    
+sign <-- generateNewSignal =
+    IF nextSignal < MAXINT THEN
+        sign := nextSignal;
+        nextSignal := nextSignal + 1
+    ELSE
+        sign := nullSignal
+    END
+
+END

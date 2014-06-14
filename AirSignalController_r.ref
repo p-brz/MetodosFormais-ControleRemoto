@@ -1,0 +1,116 @@
+REFINEMENT
+   AirSignalController_r
+REFINES
+   AirSignalController
+
+SEES
+   SignalType ,
+   TemperatureType
+
+CONSTANTS
+    maxSignals
+   
+PROPERTIES
+    maxSignals : NAT1
+    
+VARIABLES
+   signalOut ,
+   
+   allowedSignalsSeq,
+   possibleSignals
+
+INVARIANT
+    possibleSignals : iseq(SIGNALS) &
+    allowedSignalsSeq : iseq(SIGNALS) &
+    ran(possibleSignals) /\ran(allowedSignalsSeq) = {} &
+    allowedSignals = ran(allowedSignalsSeq) &
+    
+    allowedSignalsSeq |> {nullSignal} = <> &
+    possibleSignals |> {nullSignal} = <>
+
+INITIALISATION
+    ANY signalSeq 
+    WHERE signalSeq : iseq(SIGNALS) & size(signalSeq) =maxSignals
+         & nullSignal /: ran(signalSeq) 
+    THEN
+        possibleSignals := signalSeq
+    END;
+    
+   allowedSignalsSeq := {} ||
+   signalOut := nullSignal 
+
+OPERATIONS
+sended <-- sendTemperatureSignal ( temp ) =
+   PRE
+       temp : TEMPERATURES
+   THEN
+       ANY sign
+       WHERE
+           sign : SIGNALS
+       THEN
+           IF sign /= nullSignal
+           THEN
+               signalOut := sign ||
+               sended := TRUE
+           ELSE
+               sended := FALSE
+           END
+       END
+   END
+   ;
+
+signal <-- receiveSignal =
+    BEGIN
+        IF size(possibleSignals) > 0 THEN
+            CHOICE
+                allowedSignalsSeq := allowedSignalsSeq ^ (possibleSignals /|\ 1)
+                ||
+                possibleSignals := possibleSignals \|/ 1;
+                signal := last(allowedSignalsSeq)
+             OR /* Ainda há a possibilidade do sinal não ser recebido corretamente*/
+                 signal := nullSignal
+             END
+        ELSE
+            signal := nullSignal
+        END
+    END;
+
+freeSignal ( signal ) =
+   PRE
+       signal : SIGNALS
+   THEN
+       IF signal : ran(allowedSignalsSeq)  & signal /= nullSignal
+       THEN
+           ANY signalSeq WHERE signalSeq : iseq(SIGNALS) &
+               dom(signalSeq) = 1..size(allowedSignalsSeq)-1
+               & ran(signalSeq) = ran(allowedSignalsSeq) - {signal}
+           THEN
+               allowedSignalsSeq := signalSeq;
+               possibleSignals := signal -> possibleSignals
+           END
+       END
+   END
+   ;
+
+result <-- isAValidSignal ( sign ) =
+   PRE
+       sign : SIGNALS
+   THEN
+       IF sign : ran(allowedSignalsSeq)
+       THEN
+           result := TRUE
+       ELSE
+           result := FALSE
+       END
+   END
+   ;
+
+sendSignal ( signal ) =
+   PRE
+       signal : SIGNALS & signal : ran(allowedSignalsSeq)
+   THEN
+       signalOut := signal
+   END
+
+
+END

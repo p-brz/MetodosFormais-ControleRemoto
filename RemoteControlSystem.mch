@@ -1,37 +1,27 @@
 /* RemoteControlSystem
  * Author: leobrizolara
  * Creation date: 07/05/14
+ 
+ TODO:
+     - Criar operação para atualizar interface com usuario (updateInterface)
+     - definir numero de teclas em parametro (?)
+     
+     - lidar com defaultProfile
  */
 MACHINE RemoteControlSystem
 
-SEES TemperatureType, SignalType, KeyType, IdentifierType, ProfileIdentifierType, 
-    KeysToIdentifierType, KeysToSignalsType
+SEES TemperatureType, SignalType, KeyType, IdentifierType, ProfileIdentifierType, KeysToSignalsType, KeysToIdentifierType
     
-INCLUDES AirSignalController   
-  
-  
-CONSTANTS maxTemperature, minTemperature, 
-          SPECIAL_KEYS, 
-          /** teclas para aumentar e diminuir temperatura*/
-          incKey, decKey,
-          defaultProfile,
-          saveProfilesLimit,
-          ALLOWED_TEMPS
+CONSTANTS 
+          /** identificadores para as teclas de aumentar e diminuir temperatura*/
+          saveProfilesLimit
     
 PROPERTIES 
-            ALLOWED_TEMPS <: TEMPERATURES
-            & card(ALLOWED_TEMPS) >= 2
-            & maxTemperature = max(ALLOWED_TEMPS)
-            & minTemperature = min(ALLOWED_TEMPS)
-            & incKey : KEYS
-            & decKey : KEYS
-            & SPECIAL_KEYS = KEYS - {incKey,decKey}
-          /** teclas para aumentar e diminuir devem ser diferentes*/
-            & incKey /= decKey
           /** consequencia da anterior, conjunto deve ser maior ou igual a 3*/
-            & card(KEYS) >= 3
-            & defaultProfile : PROFILE_IDENTIFIER
-            & saveProfilesLimit :NAT1 
+            /*& card(KEYS) >= 3*/
+            /*& defaultProfile : PROFILE_IDENTIFIER
+            & defaultProfile /= nullProfileIdentifier*/
+            saveProfilesLimit :NAT1 
             & saveProfilesLimit <= card(PROFILE_IDENTIFIER)
     
 VARIABLES currentTemperature
@@ -43,29 +33,33 @@ VARIABLES currentTemperature
           , savedProfilesSignals
           , savedProfilesNames
           , currentProfileIdent
+          /**signalSended representa um sinal que foi/será enviado*/ 
+          , signalSended
     
-INVARIANT currentTemperature : TEMPERATURES 
+INVARIANT currentTemperature : ALLOWED_TEMPS 
           & currentTemperature <= maxTemperature 
           & currentTemperature >= minTemperature
-          & signalOut : SIGNALS
           & nameOut : CMD_IDENTIFIER
-          & keyMap : KEYS_TO_SIGNALS 
+          & signalSended : SIGNALS
+          & keyMap  : KEYS_TO_SIGNALS      
+          & nullSignal /: ran(keyMap)
           & keyName : KEYS_TO_IDENTIFIERS
-          /** em keyName só pode haver repeticoes de identificador para o nullIdentifier */
-          & !(key1,key2).(key1 : KEYS & key2 : KEYS & key1 /= key2 
-                             => keyName(key1) /= keyName(key2) or keyName(key1) = nullIdentifier)
-          & savedProfilesSignals : PROFILE_IDENTIFIER +-> KEYS_TO_SIGNALS
-          & savedProfilesNames : PROFILE_IDENTIFIER +-> KEYS_TO_IDENTIFIERS
-          & dom(savedProfilesSignals) = dom(savedProfilesNames)
+          & nullIdentifier /: ran(keyName)
+          
           & currentProfileIdent : PROFILE_IDENTIFIER
-          /** só pode haver repeticoes de identificador para o nullIdentifier */
-          & !keysToIds.(keysToIds :KEYS_TO_IDENTIFIERS  & keysToIds : ran(savedProfilesNames) =>
-                          (!(key1,key2).(key1 : dom(keysToIds) & key2 : dom(keysToIds) & key1 /= key2
-                             => keysToIds(key1) /= keysToIds(key2) or keysToIds(key1) = nullIdentifier)
-                          )
-                        )
+          & savedProfilesSignals : 
+                  PROFILE_IDENTIFIER +-> KEYS_TO_SIGNALS
+          & savedProfilesNames : 
+                  PROFILE_IDENTIFIER +-> KEYS_TO_IDENTIFIERS
+          & dom(savedProfilesSignals) = dom(savedProfilesNames)
           & card(savedProfilesSignals) <= saveProfilesLimit 
-          & card(savedProfilesNames) = card(savedProfilesSignals)                      
+          /** nullIdentifier não está contido em nenhum profile*/
+          & !profIdent.(profIdent : dom(savedProfilesNames) =>
+                         (nullIdentifier /: ran(savedProfilesNames(profIdent)))
+                        )       
+          & !profIdent.(profIdent : dom(savedProfilesSignals) =>
+                         (nullSignal /: ran(savedProfilesSignals(profIdent)))
+                        )                   
     
 INITIALISATION  ANY temp WHERE temp : TEMPERATURES 
                               & temp>=minTemperature 
@@ -73,102 +67,187 @@ INITIALISATION  ANY temp WHERE temp : TEMPERATURES
                 THEN
                     currentTemperature := temp
                 END
-                || keyMap := KEYS * {nullSignal}
-                || keyName := KEYS * {nullIdentifier}
+                || keyMap := {}
+                || keyName := {}
+                || signalSended := nullSignal
                 || nameOut := nullIdentifier
                 || currentProfileIdent := defaultProfile
                 /** salva o perfil inicial*/
-                || savedProfilesSignals := {defaultProfile |-> KEYS * {nullSignal}}
-                || savedProfilesNames   := {defaultProfile |-> KEYS * {nullIdentifier}}
+                /*|| savedProfilesSignals := 
+                    {defaultProfile |-> SPECIAL_KEYS * {nullSignal}} 
+                || savedProfilesNames   := 
+                    {defaultProfile |-> (SPECIAL_KEYS * {nullIdentifier}) }*/
+                || savedProfilesSignals := {} 
+                || savedProfilesNames   := {}
                 
 OPERATIONS
-    
-result <-- increaseTemperature =
-    IF currentTemperature + 1 <= maxTemperature 
-        &  currentTemperature + 1 : TEMPERATURES 
-    THEN
-        currentTemperature := currentTemperature + 1
-        ||
-        sendTemperatureSignal(currentTemperature + 1)
-        ||
-        nameOut := keyName(incKey)
-        ||
-        result := TRUE
-    ELSE
-        result := FALSE
-    END;
-    
-result <-- decreaseTemperature =
-    IF currentTemperature - 1 >= minTemperature 
-        &  currentTemperature - 1 : TEMPERATURES 
-    THEN
-        currentTemperature := currentTemperature - 1
-        ||
-        sendTemperatureSignal(currentTemperature - 1)
-        ||
-        nameOut := keyName(decKey)
-        ||
-        result := TRUE
-    ELSE
-        result := FALSE
-    END;
-
+  
 temp <-- showCurrentTemperature = temp := currentTemperature;
 
-/** Esta função corresponde a ação que o sistema deveria realizar ao ser pressionada uma tecla.*/
-pressSpecialKey(key) =
-    PRE key : SPECIAL_KEYS
+signalWasSent <-- pressKey(key) =
+    PRE key : KEYS
     THEN
-        sendSignal(keyMap(key))
-        ||
-        nameOut := keyName(key)
+        IF key = incKey THEN /** Aumenta temperatura, se possivel*/
+            IF currentTemperature + 1 <= maxTemperature 
+                &  currentTemperature + 1 : ALLOWED_TEMPS
+            THEN
+                /** Se possivel, algum sinal será enviado*/
+                ANY sign WHERE sign : SIGNALS THEN
+                    IF sign /= nullSignal 
+                    THEN        
+                        currentTemperature := currentTemperature + 1
+                        ||
+                        signalSended := sign
+                        ||
+                        IF key : dom(keyName) THEN
+                            nameOut := keyName(key)
+                        ELSE
+                            nameOut := nullIdentifier
+                        END
+                        ||    
+                        signalWasSent := TRUE
+                    ELSE
+                        signalWasSent := FALSE
+                    END
+                END
+            ELSE
+                signalWasSent := FALSE
+            END
+        ELSIF key = decKey THEN /** Diminui temperatura, se possivel*/
+            IF currentTemperature - 1 >= minTemperature 
+                &  currentTemperature - 1 : ALLOWED_TEMPS 
+            THEN
+                /** Se possivel, algum sinal será enviado*/
+                ANY sign WHERE sign : SIGNALS THEN
+                    IF sign /= nullSignal 
+                    THEN
+                        currentTemperature := currentTemperature - 1
+                        ||
+                        signalSended := sign
+                        ||
+                        IF key : dom(keyName) THEN
+                            nameOut := keyName(key)
+                        ELSE
+                            nameOut := nullIdentifier
+                        END
+                        ||    
+                        signalWasSent := TRUE
+                    ELSE
+                        signalWasSent := FALSE
+                    END
+                END
+            ELSE
+                signalWasSent := FALSE
+            END
+        ELSIF key : SPECIAL_KEYS & key : dom(keyMap) THEN
+            /** Não garante que o sinal poderá ser enviado*/
+            CHOICE
+                signalSended := keyMap(key)
+                ||
+                IF key : dom(keyName) THEN
+                    nameOut := keyName(key)
+                ELSE
+                    nameOut := nullIdentifier
+                END
+                ||    
+                signalWasSent := TRUE
+            OR
+                signalWasSent := FALSE
+            END
+        ELSE
+            signalWasSent := FALSE
+        END      
+    END;
+
+/** recebe sinal e grava mapeamento entre tecla e sinal
+*/
+recorded <-- recordKeySignal( key) =
+    PRE key : KEYS
+    THEN
+        IF key : SPECIAL_KEYS THEN
+            ANY sign WHERE sign : SIGNALS
+            THEN
+                IF sign /= nullSignal
+                THEN
+                    keyMap(key) := sign
+                    ||
+                    recorded := TRUE
+                ELSE
+                    recorded := FALSE
+                END
+            END
+        ELSE
+            recorded := FALSE
+        END
     END;
     
-recordSignal(signal, key) =
-    PRE signal : SIGNALS & key : SPECIAL_KEYS
+/*clearKeySignal(key) =
+    PRE key : KEYS
     THEN
-        keyMap := keyMap <+ {key |-> signal}
+        IF key : dom(keyMap) THEN 
+            keyMap := keyMap - {key |-> keyMap(key)}
+        END
+    END;*/
+    
+clearKeySignal(key) =
+    PRE key : KEYS
+    THEN
+        IF key : dom(keyMap) THEN 
+            /*keyMap(key) := nullSignal*/
+            keyMap := {key} <<|keyMap
+        END
     END;
+    
     
 recorded <-- recordKeyIdentifier(key, ident) =
     PRE key : KEYS & ident : CMD_IDENTIFIER
     THEN
-	    IF ident /: ran(keyName) or ident = nullIdentifier THEN
-            keyName := keyName <+ {key |-> ident}
-	    ||
-	    recorded := TRUE
+	    IF ident /= nullIdentifier 
+	        & ident /: ran(keyName)
+	    THEN
+            keyName(key) := ident
+	        ||
+    	    recorded := TRUE
         ELSE
             recorded := FALSE
+        END
+    END;
+    
+clearKeyIdentifier(key) =
+    PRE key : KEYS
+    THEN
+	    IF key : dom(keyName) 
+	    THEN
+            /*keyName := keyName - {key |-> keyName(key)}*/
+            keyName := {key} <<| keyName
         END
     END;
     
 ident <-- showKeyIdentifier(key) =
     PRE key : KEYS
     THEN
-        ident:= keyName(key)
-    END;
-
-keysToSignals, keysToIdentifiers <-- exportConfigurations =
-            keysToSignals, keysToIdentifiers :=  keyMap, keyName;
-    
-importConfigurations(keysToSignals, keysToIds) =
-    PRE keysToSignals : KEYS_TO_SIGNALS & keysToIds : KEYS_TO_IDENTIFIERS
-          /** só pode haver repeticoes de identificador para o nullIdentifier */
-          & !(key1,key2).(key1 : KEYS & key2 : KEYS & key1 /= key2 
-                             => keysToIds(key1) /= keysToIds(key2) or keysToIds(key1) = nullIdentifier)
-    THEN
-        keyMap, keyName := keysToSignals, keysToIds       
+        IF key : dom(keyName) THEN
+            ident:= keyName(key)
+        ELSE
+            ident := nullIdentifier
+        END
     END;
 
 success <-- saveCurrentProfile(ident) =
-    PRE ident : PROFILE_IDENTIFIER
+    PRE ident : PROFILE_IDENTIFIER 
+        & nullIdentifier /: ran(keyName)
     THEN
-        IF(card(savedProfilesSignals) < saveProfilesLimit or 
-                (ident : dom(savedProfilesSignals) & ident : dom(savedProfilesNames))) 
+        IF ident /= nullProfileIdentifier &
+            ident /= defaultProfile &
+            (card(savedProfilesSignals) < saveProfilesLimit or 
+                (ident : dom(savedProfilesSignals) 
+                    & ident : dom(savedProfilesNames)
+                )
+            ) 
         THEN
-            savedProfilesSignals := savedProfilesSignals <+ {ident |-> keyMap}
+            savedProfilesSignals(ident) := keyMap
             || 
-            savedProfilesNames := savedProfilesNames <+ {ident |-> keyName}
+            savedProfilesNames(ident) := keyName
             ||
             currentProfileIdent := ident
             ||
@@ -177,18 +256,26 @@ success <-- saveCurrentProfile(ident) =
             success := FALSE
         END
     END;
-    
+   
 success <-- loadProfileToCurrent(profileIdent) =
     PRE profileIdent : PROFILE_IDENTIFIER
     THEN
-        IF(profileIdent : dom(savedProfilesSignals)) THEN
-            keyMap  := savedProfilesSignals(profileIdent)
-            ||
-            keyName := savedProfilesNames(profileIdent)
+        IF profileIdent /= nullProfileIdentifier 
+            & (profileIdent : dom(savedProfilesSignals)) 
+        THEN
+            IF profileIdent /= defaultProfile THEN
+                keyMap  := savedProfilesSignals(profileIdent)
+                ||
+                keyName := savedProfilesNames(profileIdent)
+            ELSE
+                keyMap  := {}
+                ||
+                keyName := {}
+            END
             ||
             currentProfileIdent := profileIdent
             ||
-success := TRUE
+            success := TRUE
         ELSE
     	    success := FALSE
         END   

@@ -1,8 +1,7 @@
-REFINEMENT
-   RemoteControlSystem_r
+IMPLEMENTATION
+   RemoteControlSystem_i
 REFINES
    RemoteControlSystem
-
 SEES
    TemperatureType ,
    SignalType ,
@@ -11,10 +10,13 @@ SEES
    ProfileIdentifierType, 
    KeysToIdentifierType, 
    KeysToSignalsType
-INCLUDES TemperatureManager, 
+IMPORTS TemperatureManager, 
     /*ControlConfiguration(saveProfilesLimit),*/ 
     ControlConfiguration(saveProfilesLimit), 
     ControlUserInterface, AirSignalController
+
+VALUES
+    saveProfilesLimit = 5
 
 INVARIANT 
     /** Ligação de variáveis da máquina abstrata com variáveis de TemperatureManager*/
@@ -40,19 +42,16 @@ INVARIANT
     /*& allowedSignals = ran(keyMap)*/
     
 INITIALISATION
-   ANY temp
-   WHERE
-       temp : TEMPERATURES & minTemperature <= temp  &  temp <= maxTemperature
-   THEN
-       setTemperatures(temp, minTemperature, maxTemperature);
-       showTemperature(temp)
-   END
-   ;
-   showKey(nullIdentifier);
-   VAR loaded IN
+    VAR temp IN
+        temp := (maxTemperature + minTemperature)/2;
+        setTemperatures(temp, minTemperature, maxTemperature);
+        showTemperature(temp)
+    END;
+    showKey(nullIdentifier);
+    VAR loaded IN
        loaded <-- loadProfile(defaultProfile)
-   END;
-   showProfile(defaultProfile)
+    END;
+    showProfile(defaultProfile)
 
 OPERATIONS
 temp <-- showCurrentTemperature =
@@ -62,8 +61,7 @@ temp <-- showCurrentTemperature =
    END;
 
 signalWasSent <-- pressKey(key) =
-    PRE key : KEYS
-    THEN
+    BEGIN
         IF key = incKey THEN /** Aumenta temperatura, se possivel*/
             VAR newTemp IN
                 newTemp <-- getCurrentTemperature;
@@ -115,31 +113,37 @@ signalWasSent <-- pressKey(key) =
                     signalWasSent := FALSE
                 END
             END
-        ELSIF key : SPECIAL_KEYS THEN 
-            VAR keySign, isValidSign IN
-                keySign <-- getKeySignal(key);
-                isValidSign <-- isAValidSignal(keySign);
-                /** retornará nullSignal se key não possuir um signal valido*/
-                IF keySign /= nullSignal & isValidSign = TRUE THEN
-                    sendSignal(keySign);
-                    VAR keyIdent IN
-                        keyIdent <-- getKeyIdentifier(key);
-                        showKey(keyIdent);
-                        signalWasSent := TRUE
+        ELSE
+            VAR isSpecialKey IN     
+                isSpecialKey <-- isASpecialKey(key);
+                IF isSpecialKey = TRUE THEN 
+                    VAR keySign, isValidSign IN
+                        keySign <-- getKeySignal(key);
+                        isValidSign <-- isAValidSignal(keySign);
+                        /** retornará nullSignal se key não possuir um signal valido*/
+                        IF keySign /= nullSignal & isValidSign = TRUE THEN
+                            sendSignal(keySign);
+                            VAR keyIdent IN
+                                keyIdent <-- getKeyIdentifier(key);
+                                showKey(keyIdent);
+                                signalWasSent := TRUE
+                            END
+                        ELSE
+                            signalWasSent := FALSE
+                        END
                     END
                 ELSE
                     signalWasSent := FALSE
                 END
             END
-        ELSE
-            signalWasSent := FALSE
         END      
     END;
 
 /** recebe sinal e grava mapeamento entre tecla e sinal*/
 recorded <-- recordKeySignal( key) =
-    BEGIN
-        IF key : SPECIAL_KEYS THEN          
+    VAR isSpecialKey IN     
+        isSpecialKey <-- isASpecialKey(key);         
+        IF isSpecialKey = TRUE THEN          
             VAR currentSign, newSign, changedKeySign IN
                 /**inicializando variáveis - obrigatório em B*/
                 changedKeySign := FALSE;
@@ -215,3 +219,4 @@ currentProfileName <-- showCurrentProfileIdentification =
 
 
 END
+

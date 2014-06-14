@@ -1,0 +1,48 @@
+IMPLEMENTATION
+   ControlUserInterface_i
+REFINES
+   ControlUserInterface
+   
+IMPORTS Serial
+
+SEES
+   TemperatureType ,
+   IdentifierType ,
+   ProfileIdentifierType
+
+CONCRETE_VARIABLES
+   temperatureView ,
+   keyIdentifierView ,
+   profileIdentView
+
+INITIALISATION
+   temperatureView := (minTemperature + maxTemperature)/2;
+   keyIdentifierView := nullIdentifier;
+   profileIdentView := nullProfileIdentifier
+
+OPERATIONS
+showTemperature ( temp ) =
+   BEGIN
+       temperatureView := temp
+   END
+   ;
+
+showKey ( keyId ) =
+   BEGIN
+       keyIdentifierView := keyId
+   END
+   ;
+
+showProfile ( profileId ) =
+   BEGIN
+       profileIdentView := profileId
+   END;
+
+refreshInterface = /*TODO*/
+    BEGIN
+        printTemp(temperatureView);
+        printKey(keyIdentifierView);
+        printProfile(profileIdentView )
+    END
+
+END

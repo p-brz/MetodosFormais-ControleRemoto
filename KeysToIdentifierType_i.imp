@@ -1,0 +1,10 @@
+IMPLEMENTATION
+   KeysToIdentifierType_i
+REFINES
+   KeysToIdentifierType
+
+SEES
+   KeyType ,
+   IdentifierType
+
+END

@@ -18,9 +18,9 @@ INVARIANT currentTemp : TEMPERATURES
           & minTemp <= maxTemp
           & currentTemp >= minTemp & currentTemp <= maxTemp
     
-INITIALISATION currentTemp :: TEMPERATURES ||
-               maxTemp := max(TEMPERATURES) ||
-               minTemp := min(TEMPERATURES) 
+INITIALISATION currentTemp :: ALLOWED_TEMPS ||
+               maxTemp := maxTemperature ||
+               minTemp := minTemperature 
             
 OPERATIONS
     
@@ -50,18 +50,17 @@ setCurrentTemperature(temp) =
         currentTemp := temp 
     END;
     
-setTemperatures(currentTemperature, minTemperature, maxTemperature) =
-    PRE currentTemperature : TEMPERATURES  
-        & minTemperature : TEMPERATURES  
-        & maxTemperature : TEMPERATURES 
-        & minTemperature <= currentTemperature 
-        & currentTemperature <= maxTemperature
+setTemperatures(temp, tempMin, tempMax) =
+    PRE temp : TEMPERATURES  
+        & tempMin : TEMPERATURES  
+        & tempMax : TEMPERATURES 
+        & tempMin <= temp & temp <= tempMax
     THEN
-        currentTemp := currentTemperature
+        currentTemp := temp
         ||
-        maxTemp := maxTemperature
+        maxTemp := tempMax
         ||
-        minTemp := minTemperature
+        minTemp := tempMin
     END
 
 

@@ -1,0 +1,58 @@
+IMPLEMENTATION
+   TemperatureManager_i
+REFINES
+   TemperatureManager
+
+SEES
+   TemperatureType
+
+CONCRETE_VARIABLES
+   currentTemp ,
+   minTemp ,
+   maxTemp
+
+INITIALISATION
+   currentTemp := (maxTemperature + minTemperature)/2;
+   maxTemp := maxTemperature;
+   minTemp := minTemperature
+
+OPERATIONS
+   temp <-- getMinTemperature =
+   temp := minTemp
+   ;
+
+   temp <-- getMaxTemperature =
+   temp := maxTemp
+   ;
+
+   temp <-- getCurrentTemperature =
+   temp := currentTemp
+   ;
+
+   setMinTemperature ( temp ) =
+   BEGIN
+       minTemp := temp
+   END
+   ;
+
+   setMaxTemperature ( temp ) =
+   BEGIN
+       maxTemp := temp
+   END
+   ;
+
+   setCurrentTemperature ( temp ) =
+   BEGIN
+       currentTemp := temp
+   END
+   ;
+
+   setTemperatures ( temp , tempMin , tempMax ) =
+   BEGIN
+       currentTemp := temp;
+       maxTemp := tempMax;
+       minTemp := tempMin
+   END
+
+
+END

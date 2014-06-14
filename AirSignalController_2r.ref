@@ -1,0 +1,127 @@
+REFINEMENT
+   AirSignalController_2r
+REFINES
+   AirSignalController
+SEES
+    SignalType,
+   TemperatureType,
+   PulseType
+
+CONSTANTS
+    maxSignals
+   
+PROPERTIES
+    maxSignals : NAT1 & maxSignals > 1
+    
+ABSTRACT_VARIABLES
+   signalOut ,
+   
+   tempSignal,
+   signalsSize,
+   signalsPulses
+INVARIANT
+    signalsSize : SIGNALS +-> NAT 
+    &
+    tempSignal : SIGNALS & tempSignal /= nullSignal
+    &
+    signalsPulses : SIGNALS +-> (1..maxSignalPulses --> PULSES)
+    &
+    dom(signalsPulses) = allowedSignals
+    &
+    dom(signalsSize) = dom(signalsPulses)
+    &
+    nullSignal /: dom(signalsPulses)
+    &
+    size(signalsPulses) <= maxSignals
+   
+INITIALISATION
+    tempSignal :: SIGNALS - {nullSignal}
+    ||
+    signalsPulses := {}
+    ||
+    signalsSize := {}  ;
+    ANY pulses, numPulses 
+    WHERE pulses : (1..maxSignalPulses --> PULSES) 
+        & numPulses : NAT & numPulses <= maxSignalPulses
+    THEN
+       signalsPulses(tempSignal) := pulses
+       ||
+       signalsSize(tempSignal) := numPulses
+    END
+    ||
+    signalOut := nullSignal
+    
+
+OPERATIONS
+sended <-- sendTemperatureSignal ( temp ) =
+   BEGIN
+        ANY pulses, numPulses 
+        WHERE pulses : (1..maxSignalPulses --> PULSES) 
+            & numPulses : NAT & numPulses <= maxSignalPulses
+        THEN
+           signalsPulses(tempSignal) := pulses
+           ||
+           signalsSize(tempSignal) := numPulses
+        END;
+        signalOut := tempSignal;
+        sended := TRUE
+   END
+   ;
+
+signal <-- receiveSignal =
+    BEGIN
+        ANY pulses, sign, numPulses 
+        WHERE sign : SIGNALS 
+            & sign /: dom (signalsPulses) 
+            & pulses : (1..maxSignalPulses --> PULSES)  
+            & numPulses : NAT & numPulses <= maxSignalPulses
+        THEN
+           IF sign /= nullSignal  & size(signalsPulses) < maxSignals 
+           THEN
+               signalsPulses(sign) := pulses
+               ||
+               signalsSize(sign) := numPulses
+               ||
+               signal := sign 
+           ELSE
+               signal := nullSignal
+           END
+        END
+   END
+   ;
+
+freeSignal ( signal ) =
+   PRE
+       signal : SIGNALS
+   THEN
+       IF signal : dom ( signalsPulses) & signal /= nullSignal
+       THEN
+           signalsPulses := {signal} <<| signalsPulses
+           ||
+           signalsSize := {signal} <<| signalsSize
+       END
+   END
+   ;
+
+result <-- isAValidSignal ( sign ) =
+   PRE
+       sign : SIGNALS
+   THEN
+       IF sign : dom ( signalsPulses)
+       THEN
+           result := TRUE
+       ELSE
+           result := FALSE
+       END
+   END
+   ;
+
+sendSignal ( signal ) =
+   PRE
+       signal : SIGNALS & signal : dom ( signalsPulses)
+   THEN
+       signalOut := signal
+   END
+
+
+END

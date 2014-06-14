@@ -1,0 +1,8 @@
+IMPLEMENTATION
+   IdentifierType_i
+REFINES
+   IdentifierType
+
+VALUES CMD_IDENTIFIER = INT; nullIdentifier = -1
+    
+END
